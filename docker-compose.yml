@@ -1,0 +1,14 @@
+services:
+  cobol-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./01-batch:/app/01-batch:ro
+      - ./02-db2:/app/02-db2:ro
+      - ./03-cics:/app/03-cics:ro
+      - ./docker/server.py:/app/server.py:ro
+      - ./docker/compile.sh:/app/compile.sh:ro
+      - ./docker/static:/app/static:ro

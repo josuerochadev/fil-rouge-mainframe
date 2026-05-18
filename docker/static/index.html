@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Financiere Mainframe - Demo</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --border: #2a2a2a;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --accent: #4a9eff;
+            --green: #33cc66;
+            --amber: #f0a030;
+            --font-mono: "IBM Plex Mono", "Courier New", monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
+
+        header { margin-bottom: 40px; }
+        header h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        header p { color: var(--text-muted); font-size: 13px; }
+
+        .phase-tabs {
+            display: flex;
+            gap: 1px;
+            margin-bottom: 32px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .phase-tab {
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--surface);
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .phase-tab:hover { color: var(--text); }
+        .phase-tab.active { background: var(--accent); color: #fff; }
+
+        .programs { display: grid; gap: 12px; margin-bottom: 32px; }
+        .program-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .program-card:hover { border-color: var(--accent); }
+        .program-card.selected { border-color: var(--accent); }
+        .program-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .program-card .pgm-id { color: var(--accent); font-size: 12px; }
+        .program-card .pgm-desc { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+        .program-card .unavailable { color: var(--amber); font-size: 11px; margin-top: 4px; }
+
+        .run-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: none;
+        }
+        .run-section.visible { display: block; }
+        .run-section h2 { font-size: 15px; margin-bottom: 16px; }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+        .input-row input:focus { outline: none; border-color: var(--accent); }
+
+        .btn {
+            padding: 8px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .output {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 16px;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 500px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        .output .prompt { color: var(--green); }
+        .output .error { color: #ff6b6b; }
+
+        .data-section {
+            margin-top: 32px;
+        }
+        .data-section h2 { font-size: 15px; margin-bottom: 12px; }
+        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+        .data-btn {
+            padding: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: border-color 0.2s;
+        }
+        .data-btn:hover { border-color: var(--accent); }
+        .data-btn span { display: block; color: var(--text-muted); font-size: 11px; }
+
+        footer {
+            margin-top: 48px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 12px;
+            text-align: center;
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestion Financiere Mainframe</h1>
+            <p>Demo interactive — programmes COBOL compiles avec GnuCOBOL</p>
+        </header>
+
+        <div class="phase-tabs">
+            <button class="phase-tab active" data-phase="batch">Phase 1 : Batch</button>
+            <button class="phase-tab" data-phase="db2">Phase 2 : DB2</button>
+            <button class="phase-tab" data-phase="cics">Phase 3 : CICS</button>
+        </div>
+
+        <div id="programs" class="programs"></div>
+
+        <div id="run-section" class="run-section">
+            <h2 id="run-title"></h2>
+            <div id="input-area" class="input-row" style="display:none">
+                <input type="text" id="pgm-input" placeholder="Entree...">
+                <button class="btn" id="run-btn" onclick="runProgram()">Executer</button>
+            </div>
+            <div id="no-input-area" style="display:none">
+                <button class="btn" id="run-btn-no-input" onclick="runProgram()">Executer</button>
+            </div>
+            <div id="output" class="output" style="margin-top:16px"></div>
+        </div>
+
+        <div id="info-panel" class="run-section">
+            <h2 id="info-title"></h2>
+            <div id="info-content" class="output"></div>
+        </div>
+
+        <div class="data-section">
+            <h2>Donnees de reference</h2>
+            <div class="data-grid">
+                <button class="data-btn" onclick="viewData('CLIENT.dat')">CLIENT.dat<span>20 clients</span></button>
+                <button class="data-btn" onclick="viewData('COMPTE.dat')">COMPTE.dat<span>5 natures de comptes</span></button>
+                <button class="data-btn" onclick="viewData('PROFES.dat')">PROFES.dat<span>6 professions</span></button>
+                <button class="data-btn" onclick="viewData('REGION.dat')">REGION.dat<span>4 regions</span></button>
+            </div>
+        </div>
+
+        <footer>
+            Construit par <a href="https://josuerocha.dev">Josue Rocha</a> ·
+            <a href="https://linkedin.com/in/josuerocha">LinkedIn</a> ·
+            <a href="https://github.com/josuerochadev">GitHub</a>
+        </footer>
+    </div>
+
+    <script>
+        let programs = [];
+        let selectedProgram = null;
+
+        const DB2_INFO = {
+            description: "Les programmes DB2 utilisent le precompilateur DB2 et ne sont pas compilables avec GnuCOBOL. Consultez le rapport complet pour les resultats d'execution sur z/OS.",
+            link: "02-db2/doc/RAPPORT-PROJET.md"
+        };
+        const CICS_INFO = {
+            description: "Les programmes CICS necessitent le moniteur transactionnel CICS TS et les ecrans BMS. Consultez le rapport avec 160+ captures d'ecran pour voir le systeme en action sur z/OS.",
+            link: "03-cics/doc/rapport-complet.md"
+        };
+
+        async function loadPrograms() {
+            const res = await fetch("/api/programs");
+            programs = await res.json();
+            renderPrograms("batch");
+        }
+
+        function renderPrograms(phase) {
+            const container = document.getElementById("programs");
+            const runSection = document.getElementById("run-section");
+            const infoPanel = document.getElementById("info-panel");
+            runSection.classList.remove("visible");
+            infoPanel.classList.remove("visible");
+            selectedProgram = null;
+
+            if (phase === "db2") {
+                container.innerHTML = "";
+                infoPanel.classList.add("visible");
+                document.getElementById("info-title").textContent = "Programmes DB2 (documentation)";
+                document.getElementById("info-content").innerHTML =
+                    `<span class="prompt">${DB2_INFO.description}</span>\n\n` +
+                    "Programmes disponibles : AFFREG, INSCLI, AFFCLI, MAJCLI, LSTRUPT,\n" +
+                    "STATCLI, TOTREG, TOTMVT, RELEVE, MVT2024, RLV012\n\n" +
+                    "Techniques : SELECT INTO, CURSOR, INSERT, UPDATE,\n" +
+                    "COMMIT/ROLLBACK, INNER JOIN, GROUP BY, SUM/AVG/COUNT";
+                return;
+            }
+
+            if (phase === "cics") {
+                container.innerHTML = "";
+                infoPanel.classList.add("visible");
+                document.getElementById("info-title").textContent = "Systeme CICS (documentation)";
+                document.getElementById("info-content").innerHTML =
+                    `<span class="prompt">${CICS_INFO.description}</span>\n\n` +
+                    "Transactions : AFFI, AJOU, MAJU, SUPP, DELG, LIST, STAT\n\n" +
+                    "Architecture : mode pseudo-conversationnel avec COMMAREA,\n" +
+                    "ecrans BMS, VSAM KSDS, index alternatifs (AIX/PATH)\n\n" +
+                    "Optimisations : FSET, DATAONLY, CURSOR dynamique";
+                return;
+            }
+
+            const filtered = programs.filter(p => p.phase === phase);
+            container.innerHTML = filtered.map(p => `
+                <div class="program-card" onclick="selectProgram('${p.id}')" id="card-${p.id}">
+                    <span class="pgm-id">${p.id}</span>
+                    <h3>${p.name}</h3>
+                    <div class="pgm-desc">${p.description}</div>
+                    ${!p.available ? '<div class="unavailable">Non compile</div>' : ''}
+                </div>
+            `).join("");
+        }
+
+        function selectProgram(id) {
+            const pgm = programs.find(p => p.id === id);
+            if (!pgm) return;
+            selectedProgram = pgm;
+
+            document.querySelectorAll(".program-card").forEach(c => c.classList.remove("selected"));
+            document.getElementById(`card-${id}`).classList.add("selected");
+
+            const runSection = document.getElementById("run-section");
+            const infoPanel = document.getElementById("info-panel");
+            infoPanel.classList.remove("visible");
+            runSection.classList.add("visible");
+            document.getElementById("run-title").textContent = `${pgm.id} — ${pgm.name}`;
+            document.getElementById("output").innerHTML = `<span class="prompt">$ ./${pgm.id}</span>\nPret a executer.`;
+
+            if (pgm.input) {
+                document.getElementById("input-area").style.display = "flex";
+                document.getElementById("no-input-area").style.display = "none";
+                document.getElementById("pgm-input").placeholder = pgm.input;
+                document.getElementById("pgm-input").value = "";
+                document.getElementById("pgm-input").focus();
+            } else {
+                document.getElementById("input-area").style.display = "none";
+                document.getElementById("no-input-area").style.display = "block";
+            }
+        }
+
+        async function runProgram() {
+            if (!selectedProgram) return;
+            const output = document.getElementById("output");
+            const input = document.getElementById("pgm-input").value;
+
+            output.innerHTML = `<span class="prompt">$ ./${selectedProgram.id}${input ? ' <<< "' + input + '"' : ''}</span>\nExecution en cours...`;
+
+            try {
+                const res = await fetch(`/api/run/${selectedProgram.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ input }),
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    output.innerHTML = `<span class="prompt">$ ./${selectedProgram.id}</span>\n<span class="error">${data.error}</span>`;
+                    return;
+                }
+
+                let result = `<span class="prompt">$ ./${selectedProgram.id}${input ? ' <<< "' + input + '"' : ''}</span>\n`;
+                if (data.stdout) result += data.stdout;
+                if (data.stderr) result += `\n<span class="error">${data.stderr}</span>`;
+                if (data.returncode !== 0) result += `\n<span class="error">Code retour : ${data.returncode}</span>`;
+                output.innerHTML = result;
+            } catch (e) {
+                output.innerHTML = `<span class="error">Erreur de connexion</span>`;
+            }
+        }
+
+        async function viewData(filename) {
+            const infoPanel = document.getElementById("info-panel");
+            const runSection = document.getElementById("run-section");
+            runSection.classList.remove("visible");
+            infoPanel.classList.add("visible");
+
+            document.getElementById("info-title").textContent = filename;
+            document.getElementById("info-content").textContent = "Chargement...";
+
+            try {
+                const res = await fetch(`/api/data/${filename}`);
+                const data = await res.json();
+                document.getElementById("info-content").textContent =
+                    `${data.count} enregistrements\n${"=".repeat(60)}\n` +
+                    data.lines.join("");
+            } catch (e) {
+                document.getElementById("info-content").innerHTML = '<span class="error">Erreur de chargement</span>';
+            }
+        }
+
+        document.querySelectorAll(".phase-tab").forEach(tab => {
+            tab.addEventListener("click", () => {
+                document.querySelectorAll(".phase-tab").forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+                renderPrograms(tab.dataset.phase);
+            });
+        });
+
+        document.getElementById("pgm-input").addEventListener("keydown", e => {
+            if (e.key === "Enter") runProgram();
+        });
+
+        loadPrograms();
+    </script>
+</body>
+</html>
