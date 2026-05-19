@@ -125,9 +125,11 @@ def run_program(program_id):
 
     if pgm_info["input"]:
         data = request.get_json(silent=True) or {}
-        user_input = data.get("input", "")
+        user_input = data.get("input", "").strip()
         if not user_input:
             return jsonify({"error": f"Entree requise : {pgm_info['input']}"}), 400
+        if user_input.isdigit():
+            user_input = user_input.zfill(3)
         stdin_data = user_input
 
     env = os.environ.copy()
@@ -202,6 +204,9 @@ def run_db2_query(query_id):
         user_input = data.get("input", "").strip()
         if not user_input:
             return jsonify({"error": f"Entree requise : {q['input']}"}), 400
+        # Pad to 3 digits if numeric (001, 002...)
+        if user_input.isdigit():
+            user_input = user_input.zfill(3)
         params = (user_input,)
     return jsonify(run_query(query_id, params))
 

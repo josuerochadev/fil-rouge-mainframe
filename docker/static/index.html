@@ -1059,11 +1059,30 @@ async function execQuery() {
             const underline = widths.map(w => "\u2500".repeat(w)).join(" ");
             out += `<span class="t-separator">${esc(underline)}</span>\n`;
 
-            // Rows
+            // Rows with rupture support for LSTRUPT
             if (data.rows.length === 0) {
                 out += `<span class="t-dim">  (aucune ligne)</span>\n`;
             } else {
+                let prevRegion = null;
+                let prevProf = null;
                 data.rows.forEach(row => {
+                    // Ruptures for LSTRUPT
+                    if (data.query_id === "LSTRUPT") {
+                        const region = row["NOM_REGION"] || row["CODE_REGION"] || "";
+                        const prof = row["LIB_PROF"] || row["CODE_PROF"] || "";
+                        if (prevRegion !== null && region !== prevRegion) {
+                            out += `\n<span class="t-amber">  ── REGION : ${esc(region)} ──</span>\n\n`;
+                        } else if (prevRegion === null) {
+                            out += `<span class="t-amber">  ── REGION : ${esc(region)} ──</span>\n\n`;
+                        }
+                        if (prevProf !== null && prof !== prevProf && region === prevRegion) {
+                            out += `<span class="t-dim">     --- ${esc(prof)} ---</span>\n`;
+                        } else if (prevRegion === null || region !== prevRegion) {
+                            out += `<span class="t-dim">     --- ${esc(prof)} ---</span>\n`;
+                        }
+                        prevRegion = region;
+                        prevProf = prof;
+                    }
                     const line = cols.map((c, i) => {
                         const val = row[c] != null ? String(row[c]) : "";
                         return val.padEnd(widths[i]);
@@ -1074,6 +1093,14 @@ async function execQuery() {
 
             out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
             out += `<span class="t-info">${data.rows.length} ligne(s) retournee(s)</span>`;
+
+            // Demo note for INSCLI/MAJCLI
+            if (data.demo_note) {
+                out += `\n\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+                out += `<span class="t-head">  SQL EQUIVALENT (z/OS)</span>\n`;
+                out += `<span class="t-amber">  ${esc(data.demo_note)}</span>\n`;
+                out += `<span class="t-dim">  (demo read-only — sur z/OS, cette requete modifie la base DB2)</span>`;
+            }
 
         } else if (data.message) {
             out += `<span class="t-white">${esc(data.message)}</span>`;

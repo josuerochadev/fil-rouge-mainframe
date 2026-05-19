@@ -215,21 +215,34 @@ QUERIES = {
     },
     # ---- MISE A JOUR (lecture seule en demo) ----
     "INSCLI": {
-        "name": "Insertion client",
-        "description": "INSERT avec COMMIT/ROLLBACK — en demo : liste les 20 clients existants",
+        "name": "Insertion client (demo)",
+        "description": "INSERT avec COMMIT/ROLLBACK et conversion NUMVAL — demo read-only",
         "category": "MISE A JOUR",
         "program": "INSCLI",
-        "sql": "SELECT NUM_COMPTE, NOM_CLIENT, PREN_CLIENT, ADRESSE, SOLDE, POS FROM CLIENT ORDER BY NUM_COMPTE",
-        "columns": ["NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "ADRESSE", "SOLDE", "POS"],
+        "sql": (
+            "SELECT '021' AS NUM_COMPTE, '01' AS CODE_REGION, '20' AS CODE_NATCPT, "
+            "'NOUVEAU' AS NOM_CLIENT, 'CLIENT' AS PREN_CLIENT, "
+            "'1995-06-15' AS DATE_NAIS, 'M' AS SEXE, '10' AS CODE_PROF, "
+            "'C' AS SIT_FAM, '10 RUE NEUVE' AS ADRESSE, 5000.00 AS SOLDE, 'CR' AS POS"
+        ),
+        "columns": ["NUM_COMPTE", "CODE_REGION", "CODE_NATCPT", "NOM_CLIENT", "PREN_CLIENT",
+                     "DATE_NAIS", "SEXE", "CODE_PROF", "SIT_FAM", "ADRESSE", "SOLDE", "POS"],
+        "demo_note": "INSERT INTO CLIENT VALUES ('021','01','20','NOUVEAU','CLIENT','1995-06-15','M','10','C','10 RUE NEUVE',5000.00,'CR')",
     },
     "MAJCLI": {
-        "name": "Mise a jour client",
-        "description": "UPDATE avec COMMIT/ROLLBACK — en demo : affiche un client modifiable",
+        "name": "Mise a jour client (demo)",
+        "description": "UPDATE adresse/solde/position avec COMMIT/ROLLBACK — demo read-only",
         "category": "MISE A JOUR",
         "program": "MAJCLI",
-        "sql": "SELECT NUM_COMPTE, NOM_CLIENT, ADRESSE, SOLDE, POS FROM CLIENT WHERE NUM_COMPTE = ?",
-        "columns": ["NUM_COMPTE", "NOM_CLIENT", "ADRESSE", "SOLDE", "POS"],
+        "sql": (
+            "SELECT NUM_COMPTE, NOM_CLIENT, PREN_CLIENT, ADRESSE, SOLDE, POS, "
+            "'15 RUE NOUVELLE' AS NV_ADRESSE, 2000.00 AS NV_SOLDE, 'CR' AS NV_POS "
+            "FROM CLIENT WHERE NUM_COMPTE = ?"
+        ),
+        "columns": ["NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "ADRESSE", "SOLDE", "POS",
+                     "NV_ADRESSE", "NV_SOLDE", "NV_POS"],
         "input": "Numero de compte (001-020)",
+        "demo_note": "UPDATE CLIENT SET ADRESSE = '15 RUE NOUVELLE', SOLDE = 2000.00, POS = 'CR' WHERE NUM_COMPTE = ?",
     },
 }
 
@@ -264,7 +277,7 @@ def run_query(query_id, params=None):
     rows = [dict(row) for row in cursor.fetchall()]
     conn.close()
 
-    return {
+    result = {
         "query_id": query_id,
         "name": query["name"],
         "program": query["program"],
@@ -273,3 +286,6 @@ def run_query(query_id, params=None):
         "rows": rows,
         "count": len(rows),
     }
+    if "demo_note" in query:
+        result["demo_note"] = query["demo_note"]
+    return result
