@@ -18,7 +18,7 @@
 ## Audit qualite
 
 - [x] Passer les programmes batch restants (PJ10ACT, PJ10REG, PJ13AJOU, PJ15MONT, PJ16COND, PJ17TOP5) et ameliorer les en-tetes
-- [ ] Ameliorer les en-tetes des programmes DB2 restants (AFFCLI, MAJCLI, STATCLI, TOTREG, TOTMVT, MVT2024, RLV012)
+- [x] Ameliorer les en-tetes des programmes DB2 restants (AFFCLI, MAJCLI, STATCLI, TOTREG, TOTMVT, MVT2024, RLV012)
 - [x] Verifier la coherence des noms de paragraphes (convention 0000-, 1000-, 2000-, 9000-)
 - [x] Supprimer le trailing whitespace et les tabulations dans les .cbl
 

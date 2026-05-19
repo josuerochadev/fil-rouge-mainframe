@@ -1,7 +1,12 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. MVT2024.
       *---------------------------------------------------------
-      * P3 EXERCICE 11 : Mouvements de l'annee 2024
+      * PROGRAMME : MVT2024
+      * FONCTION  : Liste de tous les mouvements de l'annee 2024
+      *             avec nom du client (jointure)
+      * TABLES    : MOUVEMENT, CLIENT (INNER JOIN)
+      * TECHNIQUE : CURSOR DB2, filtre YEAR(DATE_MVT) = 2024,
+      *             tri par date et numero de compte
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.

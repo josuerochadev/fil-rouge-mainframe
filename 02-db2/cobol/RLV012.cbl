@@ -1,8 +1,13 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. RLV012.
       *---------------------------------------------------------
-      * P3 EXERCICE 12 : Mouvements 2024 d'un client (In-Stream)
-      * Reprise de l'exercice 11 avec numero client en SYSIN
+      * PROGRAMME : RLV012
+      * FONCTION  : Mouvements 2024 d'un client specifique
+      *             (variante de MVT2024 avec saisie compte)
+      * TABLES    : CLIENT (SELECT INTO), MOUVEMENT (CURSOR)
+      * ENTREE    : Numero de compte via ACCEPT (SYSIN)
+      * TECHNIQUE : CURSOR DB2, filtre YEAR + NUM_COMPTE,
+      *             verification existence client
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.

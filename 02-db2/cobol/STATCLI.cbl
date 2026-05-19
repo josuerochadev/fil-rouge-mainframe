@@ -1,7 +1,11 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. STATCLI.
       *---------------------------------------------------------
-      * P3 EXERCICE 6 : Statistiques DB/CR (total et moyenne)
+      * PROGRAMME : STATCLI
+      * FONCTION  : Statistiques debiteurs/crediteurs (total
+      *             et moyenne des soldes par position)
+      * TABLE     : CLIENT (SELECT SUM, AVG, COUNT)
+      * TECHNIQUE : Fonctions d'agregation SQL, edition DISPLAY
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.

@@ -1,7 +1,13 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. MAJCLI.
       *---------------------------------------------------------
-      * P3 EXERCICE 4 : Mise a jour client (adresse, solde, pos)
+      * PROGRAMME : MAJCLI
+      * FONCTION  : Mise a jour d'un client (adresse, solde,
+      *             position) par numero de compte
+      * TABLE     : CLIENT (UPDATE avec COMMIT/ROLLBACK)
+      * ENTREE    : Donnees via SYSIN (JCL In-Stream)
+      * TECHNIQUE : ACCEPT, NUMVAL, SQL UPDATE, gestion
+      *             transactionnelle
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.

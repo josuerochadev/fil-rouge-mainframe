@@ -1,8 +1,12 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. TOTMVT.
       *---------------------------------------------------------
-      * P3 EXERCICE 9 : Total mouvements d'un client
-      * Recupere NUM_COMPTE via ACCEPT (In-Stream JCL)
+      * PROGRAMME : TOTMVT
+      * FONCTION  : Total et nombre de mouvements d'un client
+      *             avec verification d'existence prealable
+      * TABLES    : CLIENT (SELECT INTO), MOUVEMENT (SUM, COUNT)
+      * ENTREE    : Numero de compte via ACCEPT (SYSIN)
+      * TECHNIQUE : SQL embarque, COALESCE, gestion SQLCODE
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.

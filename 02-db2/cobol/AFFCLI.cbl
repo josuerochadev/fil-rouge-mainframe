@@ -1,7 +1,11 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. AFFCLI.
       *---------------------------------------------------------
-      * P3 EXERCICE 3 : Afficher tous les clients de Marseille
+      * PROGRAMME : AFFCLI
+      * FONCTION  : Affichage de tous les clients d'une region
+      *             (Marseille, CODE_REGION = '02')
+      * TABLE     : CLIENT (SELECT avec CURSOR)
+      * TECHNIQUE : CURSOR DB2, FETCH en boucle, edition DISPLAY
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.

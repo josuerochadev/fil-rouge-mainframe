@@ -1,7 +1,12 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. TOTREG.
       *---------------------------------------------------------
-      * P3 EXERCICE 7 : Totaux par region avec niveau 88
+      * PROGRAMME : TOTREG
+      * FONCTION  : Totalisation debiteurs/crediteurs par region
+      *             avec iteration sur les 4 regions
+      * TABLES    : CLIENT, REGION (LEFT JOIN + CASE)
+      * TECHNIQUE : Niveaux 88, PERFORM VARYING, COALESCE,
+      *             agregation conditionnelle CASE WHEN
       *---------------------------------------------------------
 
        ENVIRONMENT DIVISION.
