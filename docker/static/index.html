@@ -317,6 +317,43 @@
             color: var(--white);
         }
 
+        /* ---- CICS NAV BAR ---- */
+        .cics-nav {
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            font-size: 12px;
+        }
+        .cics-nav .nav-btn {
+            background: none;
+            border: 1px solid var(--green-dim);
+            color: var(--green);
+            font-family: var(--font);
+            font-size: 12px;
+            padding: 3px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .cics-nav .nav-btn:hover {
+            background: var(--green);
+            color: var(--bg);
+        }
+        .cics-nav .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .cics-nav .step-info {
+            color: var(--amber);
+            font-size: 12px;
+        }
+        .cics-nav .nav-hint {
+            color: var(--green-dim);
+            margin-left: auto;
+        }
+
         /* ---- CURSOR BLINK ---- */
         @keyframes blink {
             0%, 100% { opacity: 1; }
@@ -368,6 +405,13 @@
                 <input type="text" id="cmd-input" placeholder="Selectionner un programme..." autocomplete="off">
                 <button class="run-btn" id="run-btn" onclick="execProgram()" disabled>EXEC</button>
             </div>
+
+            <div class="cics-nav" id="cics-nav" style="display:none">
+                <button class="nav-btn" id="cics-prev-btn" onclick="cicsPrev()" disabled>PF7 Prec</button>
+                <button class="nav-btn" id="cics-next-btn" onclick="cicsNext()" disabled>PF8 Suiv</button>
+                <span class="step-info" id="cics-step-info"></span>
+                <span class="nav-hint" id="cics-nav-hint">Selectionner une transaction</span>
+            </div>
         </div>
 
         <div class="fkeys">
@@ -392,6 +436,15 @@
 let programs = [];
 let selected = null;
 let currentPhase = "batch";
+
+// DB2 state
+let db2Queries = [];
+let selectedQuery = null;
+
+// CICS state
+let cicsScreens = [];
+let selectedScreen = null;
+let currentStep = 0;
 
 // Clock
 function updateClock() {
@@ -434,6 +487,8 @@ document.addEventListener("keydown", e => {
     if (e.key === "3") showPhaseByKey("cics");
     if (e.key === "4") showPhaseByKey("data");
     if (e.key === "F5" || e.key === "Enter") { e.preventDefault(); execProgram(); }
+    if (e.key === "F7") { e.preventDefault(); if (currentPhase === "cics") cicsPrev(); }
+    if (e.key === "F8") { e.preventDefault(); if (currentPhase === "cics") cicsNext(); }
 });
 
 function showPhaseByKey(phase) {
@@ -446,10 +501,18 @@ function showPhaseByKey(phase) {
 function showPhase(phase) {
     currentPhase = phase;
     selected = null;
+    selectedQuery = null;
+    selectedScreen = null;
+    currentStep = 0;
+
     const body = document.getElementById("screen-body");
     const cmdline = document.getElementById("cmdline");
+    const cicsNav = document.getElementById("cics-nav");
     const title = document.getElementById("screen-title");
     const info = document.getElementById("screen-info");
+
+    cmdline.style.display = "none";
+    cicsNav.style.display = "none";
 
     if (phase === "batch") {
         title.textContent = "PROGRAMMES BATCH — COBOL/GnuCOBOL";
@@ -458,18 +521,17 @@ function showPhase(phase) {
         renderBatch(body);
     } else if (phase === "db2") {
         title.textContent = "PROGRAMMES DB2 — SQL EMBARQUE";
-        info.textContent = "11 programmes";
-        cmdline.style.display = "none";
+        info.textContent = "7 requetes";
+        cmdline.style.display = "flex";
         renderDB2(body);
     } else if (phase === "cics") {
         title.textContent = "SYSTEME CICS — TRANSACTIONNEL";
-        info.textContent = "7 transactions";
-        cmdline.style.display = "none";
+        info.textContent = "5 transactions";
+        cicsNav.style.display = "flex";
         renderCICS(body);
     } else if (phase === "data") {
         title.textContent = "DONNEES DE REFERENCE";
         info.textContent = "fichiers .dat";
-        cmdline.style.display = "none";
         renderData(body);
     }
 }
@@ -513,6 +575,10 @@ function selectPgm(id) {
 }
 
 async function execProgram() {
+    if (currentPhase === "db2") {
+        execQuery();
+        return;
+    }
     if (!selected || currentPhase !== "batch") return;
 
     const input = document.getElementById("cmd-input").value;
@@ -540,13 +606,10 @@ async function execProgram() {
         let out = `<span class="t-prompt">EXEC ${selected.id}</span>  ${esc(selected.name)}\n`;
         out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
 
-        // Show edition output (file output) if available - this is the main output
         if (data.edition && data.edition.trim()) {
             out += `<span class="t-white">${esc(data.edition)}</span>`;
         }
-        // Show stdout if there's meaningful content beyond just program start/end messages
         if (data.stdout && data.stdout.trim()) {
-            // If we already showed edition, put stdout in a dimmer style
             if (data.edition && data.edition.trim()) {
                 out += `\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
                 out += `<span class="t-dim">${esc(data.stdout)}</span>`;
@@ -569,87 +632,272 @@ async function execProgram() {
 }
 
 // ---- DB2 ----
-function renderDB2(body) {
-    const pgms = [
-        ["AFFREG",  "SELECT INTO",    "Affichage region par code"],
-        ["AFFCLI",  "CURSOR/FETCH",   "Clients d'une region (Marseille)"],
-        ["INSCLI",  "INSERT/COMMIT",  "Insertion nouveau client"],
-        ["MAJCLI",  "UPDATE/ROLLBACK","Mise a jour client"],
-        ["STATCLI", "SUM/AVG/COUNT",  "Statistiques debiteurs/crediteurs"],
-        ["TOTREG",  "JOIN/CASE",      "Totaux par region"],
-        ["TOTMVT",  "SUM/COUNT",      "Total mouvements d'un client"],
-        ["MVT2024", "CURSOR/JOIN",    "Mouvements de l'annee 2024"],
-        ["RLV012",  "CURSOR/SYSIN",   "Mouvements 2024 d'un client"],
-        ["RELEVE",  "CURSOR/FETCH",   "Releve de compte avec mouvements"],
-        ["LSTRUPT", "JOIN/RUPTURE",   "Liste clients avec ruptures 3 niveaux"],
-    ];
+async function renderDB2(body) {
+    body.innerHTML = `<div class="terminal"><span class="t-info loading">Chargement requetes DB2 </span></div>`;
 
-    body.innerHTML = `
-        <div class="terminal" style="max-height:none">
-<span class="t-head">  PROGRAMMES COBOL-DB2 — SQL EMBARQUE DANS COBOL</span>
-<span class="t-separator">${"─".repeat(70)}</span>
-<span class="t-dim">  Ces programmes utilisent le precompilateur DB2 (DSNHPC) et ne sont
-  pas compilables avec GnuCOBOL. Developpes et testes sur z/OS.</span>
+    try {
+        const res = await fetch("/api/db2/queries");
+        db2Queries = await res.json();
+    } catch(e) {
+        db2Queries = [];
+    }
 
-<span class="t-separator">${"─".repeat(70)}</span>
-<span class="t-head">  PROGRAMME   TECHNIQUE          DESCRIPTION</span>
-<span class="t-separator">${"─".repeat(70)}</span>
-${pgms.map(([id, tech, desc]) =>
-`  <span class="t-prompt">${id.padEnd(12)}</span><span class="t-amber">${tech.padEnd(19)}</span>${desc}`
-).join("\n")}
-<span class="t-separator">${"─".repeat(70)}</span>
+    if (!db2Queries || db2Queries.length === 0) {
+        body.innerHTML = `<div class="terminal"><span class="t-error">Impossible de charger les requetes DB2.</span>\n<span class="t-dim">Verifier que l'API est disponible sur /api/db2/queries</span></div>`;
+        return;
+    }
 
-<span class="t-dim">  Schema : 5 tables (CLIENT, REGION, PROFESSI, NATCOMPT, MOUVEMENT)
-  Gestion transactionnelle : COMMIT / ROLLBACK sur chaque modification
-  Rapport complet : 02-db2/doc/RAPPORT-PROJET.md</span>
-        </div>`;
+    body.innerHTML = `<div class="pgm-grid">${db2Queries.map(q => `
+        <div class="pgm-item" data-id="${esc(q.id)}" onclick="selectQuery('${esc(q.id)}')">
+            <span class="pgm-id">${esc(q.id)}</span>
+            <span class="pgm-name">${esc(q.name || q.description || "")}</span>
+            ${q.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
+        </div>`).join("")}</div>`;
+
+    document.getElementById("cmd-input").placeholder = "Selectionner une requete...";
+    document.getElementById("cmd-input").value = "";
+    document.getElementById("run-btn").disabled = true;
+
+    document.getElementById("screen-info").textContent = db2Queries.length + " requetes";
+}
+
+function selectQuery(id) {
+    const q = db2Queries.find(q => q.id === id);
+    if (!q) return;
+    selectedQuery = q;
+
+    document.querySelectorAll(".pgm-item").forEach(el => {
+        el.classList.toggle("selected", el.dataset.id === id);
+    });
+
+    const input = document.getElementById("cmd-input");
+    const btn = document.getElementById("run-btn");
+
+    if (q.input) {
+        input.placeholder = q.input;
+        input.value = "";
+        input.focus();
+    } else {
+        input.placeholder = `${q.id} — Appuyer sur EXEC ou Enter`;
+        input.value = "";
+    }
+    btn.disabled = false;
+}
+
+async function execQuery() {
+    if (!selectedQuery) return;
+
+    const inputVal = document.getElementById("cmd-input").value;
+    if (selectedQuery.input && !inputVal.trim()) {
+        document.getElementById("cmd-input").focus();
+        return;
+    }
+
+    const body = document.getElementById("screen-body");
+    body.innerHTML = `<div class="terminal"><span class="t-prompt">SQL ${selectedQuery.id}</span>${inputVal ? ` INPUT='${inputVal}'` : ''}\n<span class="t-info loading">Execution en cours </span></div>`;
+
+    try {
+        const res = await fetch(`/api/db2/run/${selectedQuery.id}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ input: inputVal }),
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            body.innerHTML = `<div class="terminal"><span class="t-prompt">SQL ${selectedQuery.id}</span>\n<span class="t-error">ERREUR: ${esc(data.error)}</span></div>`;
+            return;
+        }
+
+        let out = `<span class="t-prompt">SQL ${esc(selectedQuery.id)}</span>`;
+        if (selectedQuery.name || selectedQuery.description) {
+            out += `  ${esc(selectedQuery.name || selectedQuery.description)}`;
+        }
+        out += "\n";
+
+        // Show the SQL query if returned
+        if (data.sql) {
+            out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+            out += `<span class="t-prompt">${esc(data.sql)}</span>\n`;
+        }
+
+        out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+
+        // Render columns and rows
+        if (data.columns && data.rows) {
+            const cols = data.columns;
+            // Compute column widths: max of header length and max data length
+            const widths = cols.map(c => {
+                let max = String(c).length;
+                data.rows.forEach(row => {
+                    const val = row[c] != null ? String(row[c]) : "";
+                    if (val.length > max) max = val.length;
+                });
+                return Math.min(max + 2, 30);
+            });
+
+            // Header
+            const header = cols.map((c, i) => String(c).padEnd(widths[i])).join(" ");
+            out += `<span class="t-head">${esc(header)}</span>\n`;
+            // Header underline
+            const underline = widths.map(w => "─".repeat(w)).join(" ");
+            out += `<span class="t-separator">${esc(underline)}</span>\n`;
+
+            // Rows
+            if (data.rows.length === 0) {
+                out += `<span class="t-dim">  (aucune ligne)</span>\n`;
+            } else {
+                data.rows.forEach(row => {
+                    const line = cols.map((c, i) => {
+                        const val = row[c] != null ? String(row[c]) : "";
+                        return val.padEnd(widths[i]);
+                    }).join(" ");
+                    out += `<span class="t-white">${esc(line)}</span>\n`;
+                });
+            }
+
+            out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+            out += `<span class="t-info">${data.rows.length} ligne(s) retournee(s)</span>`;
+
+        } else if (data.message) {
+            out += `<span class="t-white">${esc(data.message)}</span>`;
+        } else if (data.stdout) {
+            out += `<span class="t-white">${esc(data.stdout)}</span>`;
+        }
+
+        body.innerHTML = `<div class="terminal">${out}</div>`;
+    } catch(e) {
+        body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR CONNEXION API</span></div>`;
+    }
 }
 
 // ---- CICS ----
-function renderCICS(body) {
-    const txns = [
-        ["AFFI", "PRGCLIA", "Affichage d'un client par numero"],
-        ["AJOU", "PRGAJT",  "Ajout client avec validation complete"],
-        ["MAJU", "PRGMAJ",  "Modification client (adresse, solde)"],
-        ["SUPP", "PRGSUP",  "Suppression avec confirmation"],
-        ["DELG", "PRGDEL",  "Consultation avec delegation inter-pgm"],
-        ["LIST", "PRGLGEN", "Liste paginee (STARTBR/READNEXT)"],
-        ["STAT", "PRGSTAT", "Statistiques par region (AIX/PATH)"],
-    ];
+async function renderCICS(body) {
+    body.innerHTML = `<div class="terminal"><span class="t-info loading">Chargement transactions CICS </span></div>`;
 
-    body.innerHTML = `
-        <div class="terminal" style="max-height:none">
-<span class="t-head">  SYSTEME TRANSACTIONNEL CICS — 7 TRANSACTIONS</span>
-<span class="t-separator">${"─".repeat(70)}</span>
-<span class="t-dim">  Systeme CRUD interactif sous CICS TS avec ecrans BMS,
-  mode pseudo-conversationnel et COMMAREA.</span>
+    try {
+        const res = await fetch("/api/cics/screens");
+        cicsScreens = await res.json();
+    } catch(e) {
+        cicsScreens = [];
+    }
 
-<span class="t-separator">${"─".repeat(70)}</span>
-<span class="t-head">  TRANS  PROGRAMME  DESCRIPTION</span>
-<span class="t-separator">${"─".repeat(70)}</span>
-${txns.map(([tx, pgm, desc]) =>
-`  <span class="t-amber">${tx.padEnd(7)}</span><span class="t-prompt">${pgm.padEnd(11)}</span>${desc}`
-).join("\n")}
-<span class="t-separator">${"─".repeat(70)}</span>
+    if (!cicsScreens || cicsScreens.length === 0) {
+        body.innerHTML = `<div class="terminal"><span class="t-error">Impossible de charger les ecrans CICS.</span>\n<span class="t-dim">Verifier que l'API est disponible sur /api/cics/screens</span></div>`;
+        return;
+    }
 
-<span class="t-head">  OPTIMISATIONS IMPLEMENTEES</span>
-<span class="t-separator">${"─".repeat(70)}</span>
-  <span class="t-amber">FSET      </span> Renvoi automatique des champs modifies dans BMS
-  <span class="t-amber">DATAONLY  </span> Reaffichage sans renvoyer la structure MAP
-  <span class="t-amber">CURSOR    </span> Positionnement dynamique sur le champ en erreur
-<span class="t-separator">${"─".repeat(70)}</span>
+    body.innerHTML = `<div class="pgm-grid">${cicsScreens.map(s => `
+        <div class="pgm-item" data-id="${esc(s.id)}" onclick="selectScreen('${esc(s.id)}')">
+            <span class="pgm-id">${esc(s.transaction)} <span style="color:var(--green-dim)">${esc(s.program)}</span></span>
+            <span class="pgm-name">${esc(s.title || s.description || "")}</span>
+        </div>`).join("")}</div>`;
 
-<span class="t-head">  ARCHITECTURE</span>
-<span class="t-separator">${"─".repeat(70)}</span>
-  <span class="t-prompt">Mode       </span> Pseudo-conversationnel (RETURN TRANSID)
-  <span class="t-prompt">Ecrans     </span> 7 maps BMS avec DFHMSD/DFHMDI/DFHMDF
-  <span class="t-prompt">Donnees    </span> VSAM KSDS + index alternatifs (AIX/PATH)
-  <span class="t-prompt">Navigation </span> STARTBR / READNEXT / READPREV / ENDBR
-  <span class="t-prompt">Pagination </span> REDEFINES pour acces indexe aux lignes BMS
-<span class="t-separator">${"─".repeat(70)}</span>
+    document.getElementById("screen-info").textContent = cicsScreens.length + " transactions";
 
-<span class="t-dim">  Rapport complet avec 160+ captures : 03-cics/doc/rapport-complet.md</span>
-        </div>`;
+    // Reset nav bar
+    document.getElementById("cics-prev-btn").disabled = true;
+    document.getElementById("cics-next-btn").disabled = true;
+    document.getElementById("cics-step-info").textContent = "";
+    document.getElementById("cics-nav-hint").textContent = "Selectionner une transaction";
+}
+
+function selectScreen(id) {
+    const s = cicsScreens.find(s => s.id === id);
+    if (!s) return;
+    selectedScreen = s;
+    currentStep = 0;
+
+    document.querySelectorAll(".pgm-item").forEach(el => {
+        el.classList.toggle("selected", el.dataset.id === id);
+    });
+
+    showCicsStep(id, 0);
+}
+
+async function showCicsStep(id, step) {
+    const body = document.getElementById("screen-body");
+    body.innerHTML = `<div class="terminal"><span class="t-info loading">Chargement ecran </span></div>`;
+
+    try {
+        const res = await fetch(`/api/cics/screen/${id}?step=${step}`);
+        const data = await res.json();
+
+        if (data.error) {
+            body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR: ${esc(data.error)}</span></div>`;
+            return;
+        }
+
+        currentStep = step;
+
+        // Render the 24-line ASCII screen
+        const screenLines = Array.isArray(data.screen) ? data.screen : [];
+        const screenText = screenLines.join("\n");
+        const totalSteps = data.total_steps || 1;
+
+        // Process the screen: highlight input fields
+        const rendered = renderCicsScreen(screenText);
+
+        let out = `<span class="t-head">  ${esc(selectedScreen.transaction)}`;
+        if (selectedScreen.title) {
+            out += ` — ${esc(selectedScreen.title)}`;
+        }
+        out += `</span>\n`;
+        out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+        out += rendered;
+        out += `\n<span class="t-separator">${"─".repeat(70)}</span>`;
+
+        body.innerHTML = `<div class="terminal" style="font-size:12px">${out}</div>`;
+
+        // Update nav bar
+        const prevBtn = document.getElementById("cics-prev-btn");
+        const nextBtn = document.getElementById("cics-next-btn");
+        const stepInfo = document.getElementById("cics-step-info");
+        const navHint = document.getElementById("cics-nav-hint");
+
+        prevBtn.disabled = (step <= 0);
+        nextBtn.disabled = (step >= totalSteps - 1);
+        stepInfo.textContent = totalSteps > 1 ? `Etape ${step + 1}/${totalSteps}` : "";
+        navHint.textContent = `${esc(selectedScreen.transaction)}${selectedScreen.title ? " — " + selectedScreen.title : ""}`;
+
+    } catch(e) {
+        body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR CONNEXION API</span></div>`;
+    }
+}
+
+function renderCicsScreen(text) {
+    if (!text) return "";
+
+    // Escape HTML first, then re-apply highlighting
+    // We need to escape character by character to avoid double-escaping spans
+    // Strategy: split on input field patterns, escape plain parts, wrap fields
+
+    // Replace runs of underscores (input fields) with amber spans
+    // Also handle single underscore used as placeholder
+    const parts = text.split(/(_{2,}|_(?=[^_]))/g);
+
+    let result = "";
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (!part) continue;
+        if (/^_{2,}$/.test(part) || /^_$/.test(part)) {
+            // Input field — amber highlight
+            result += `<span class="t-amber">${esc(part)}</span>`;
+        } else {
+            result += esc(part);
+        }
+    }
+    return result;
+}
+
+function cicsPrev() {
+    if (!selectedScreen || currentStep <= 0) return;
+    showCicsStep(selectedScreen.id, currentStep - 1);
+}
+
+function cicsNext() {
+    if (!selectedScreen) return;
+    showCicsStep(selectedScreen.id, currentStep + 1);
 }
 
 // ---- DATA ----
