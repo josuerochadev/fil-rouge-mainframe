@@ -10,12 +10,12 @@ RUN pip3 install flask flask-cors
 
 WORKDIR /app
 
-COPY . /app/
+COPY 01-batch/ /app/01-batch/
+COPY docker/compile.sh /app/compile.sh
+COPY docker/server.py /app/server.py
+COPY docker/static/ /app/static/
 
-RUN mkdir -p /app/bin
-
-COPY compile.sh /app/compile.sh
-RUN chmod +x /app/compile.sh
+RUN mkdir -p /app/bin && chmod +x /app/compile.sh
 
 EXPOSE 8080
 

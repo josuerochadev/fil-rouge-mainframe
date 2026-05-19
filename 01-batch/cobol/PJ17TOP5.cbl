@@ -9,13 +9,14 @@
        FILE-CONTROL.                                                    
             SELECT F-SORT ASSIGN TO SORTWORK.                           
                                                                         
-            SELECT F-CLIENT ASSIGN TO FCLIENT                           
+            SELECT F-CLIENT ASSIGN TO 'CLIENT.ix'
                 ORGANIZATION IS INDEXED                                 
                 ACCESS MODE IS SEQUENTIAL                               
                 RECORD KEY IS CLI-NUM-COMPTE                            
                 FILE STATUS IS WS-FS-CLI.                               
                                                                         
-            SELECT F-EDITION ASSIGN TO FEDITION                         
+            SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-EDI.                               
                                                                         
        DATA DIVISION.                                                   
@@ -38,9 +39,9 @@
            05 FILLER               PIC X(19).                           
                                                                         
        FD F-CLIENT.                                                     
-       01 ENR-CLIENT               PIC X(80).                           
-            05 CLI-NUM-COMPTE       PIC 9(03).                          
-            05 FILLER               PIC X(77).                          
+       01 ENR-CLIENT.
+            05 CLI-NUM-COMPTE       PIC 9(03).
+            05 FILLER               PIC X(77).
                                                                         
        FD F-EDITION.                                                    
        01 ENR-EDITION              PIC X(80).                           

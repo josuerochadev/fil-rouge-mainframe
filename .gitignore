@@ -2,5 +2,10 @@ bin/
 __pycache__/
 *.pyc
 *.so
+*.dylib
 *.o
 .DS_Store
+*.ix
+*.ix.*
+EDITION.txt
+MOUVFUSI.dat

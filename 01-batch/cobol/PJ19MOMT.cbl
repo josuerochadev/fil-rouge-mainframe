@@ -10,10 +10,12 @@
        FILE-CONTROL.                                                    
              SELECT F-SORT ASSIGN TO SORTWORK.                          
                                                                         
-             SELECT F-MOUV ASSIGN TO FMOUV                              
-               FILE STATUS IS WS-FS-MOUV.                               
-                                                                        
-             SELECT F-EDITION ASSIGN TO FEDITION                        
+             SELECT F-MOUV ASSIGN TO 'MOUVEMENT.dat'
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS WS-FS-MOUV.
+
+             SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-EDI.                               
                                                                         
        DATA DIVISION.                                                   

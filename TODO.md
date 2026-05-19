@@ -2,18 +2,18 @@
 
 ## Deploiement
 
-- [ ] Tester `docker compose up` en local et corriger les erreurs de compilation GnuCOBOL
-- [ ] Adapter les `ASSIGN TO` des programmes batch pour GnuCOBOL (remplacer les DD names par des chemins fichiers)
-- [ ] Verifier que les fichiers .dat sont lisibles par les programmes compiles
+- [x] Tester `docker compose up` en local et corriger les erreurs de compilation GnuCOBOL
+- [x] Adapter les `ASSIGN TO` des programmes batch pour GnuCOBOL (remplacer les DD names par des chemins fichiers)
+- [x] Verifier que les fichiers .dat sont lisibles par les programmes compiles
 - [ ] Choisir une plateforme de deploiement (Render, Railway, Fly.io) et deployer
 - [ ] Ajouter l'URL de la demo live dans le README principal
 
 ## Tests
 
-- [ ] Compiler chaque programme batch individuellement avec `cobc` et lister ceux qui passent / echouent
-- [ ] Tester les programmes interactifs (PJ19MOMT, PJ20RLV) avec differentes entrees
-- [ ] Verifier les sorties des programmes non-interactifs (PJ15MONT, PJ16COND, PJ21MERG)
-- [ ] Tester les endpoints de l'API Flask (`/api/programs`, `/api/run/<id>`, `/api/data/<file>`)
+- [x] Compiler chaque programme batch individuellement avec `cobc` et lister ceux qui passent / echouent
+- [x] Tester les programmes interactifs (PJ19MOMT, PJ20RLV) avec differentes entrees
+- [x] Verifier les sorties des programmes non-interactifs (PJ15MONT, PJ16COND, PJ21MERG)
+- [x] Tester les endpoints de l'API Flask (`/api/programs`, `/api/run/<id>`, `/api/data/<file>`)
 
 ## Audit qualite
 
@@ -33,5 +33,5 @@
 
 - [ ] Ajouter un healthcheck dans le Dockerfile
 - [ ] Ajouter les programmes DB2 en mode simulation (PostgreSQL/SQLite au lieu de DB2)
-- [ ] Creer un fichier MOUVEMENT.dat pour que PJ19MOMT et PJ20RLV fonctionnent sans z/OS
+- [x] Creer un fichier MOUVEMENT.dat pour que PJ19MOMT et PJ20RLV fonctionnent sans z/OS
 - [ ] Ajouter un mode "terminal" dans l'interface web (style 3270) pour les screenshots CICS

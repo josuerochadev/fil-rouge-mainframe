@@ -7,13 +7,14 @@
        ENVIRONMENT DIVISION.                                            
        INPUT-OUTPUT SECTION.                                            
        FILE-CONTROL.                                                    
-            SELECT F-PROFES ASSIGN TO FPROFES                           
+            SELECT F-PROFES ASSIGN TO 'PROFES.ix'
                 ORGANIZATION IS INDEXED                                 
                 ACCESS MODE IS SEQUENTIAL                               
                 RECORD KEY IS PRO-CODE                                  
                 FILE STATUS IS WS-FS-PROFES.                            
                                                                         
-            SELECT F-EDITION ASSIGN TO FEDITION                         
+            SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-EDITION.                           
                                                                         
        DATA DIVISION.                                                   

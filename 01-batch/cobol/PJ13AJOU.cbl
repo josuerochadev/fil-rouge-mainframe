@@ -7,7 +7,7 @@
        ENVIRONMENT DIVISION.                                            
        INPUT-OUTPUT SECTION.                                            
        FILE-CONTROL.                                                    
-            SELECT F-CLIENT ASSIGN TO FCLIENT                           
+            SELECT F-CLIENT ASSIGN TO 'CLIENT.ix'
                 ORGANIZATION IS INDEXED                                 
                 ACCESS MODE IS RANDOM                                   
                 RECORD KEY IS CLI-NUM-COMPTE                            

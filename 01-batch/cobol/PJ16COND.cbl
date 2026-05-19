@@ -7,11 +7,13 @@
        ENVIRONMENT DIVISION.                                            
        INPUT-OUTPUT SECTION.                                            
        FILE-CONTROL.                                                    
-            SELECT F-CLIENT ASSIGN TO FCLIENT                           
+            SELECT F-CLIENT ASSIGN TO 'CLIENT.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-CLI.                               
                                                                         
-            SELECT F-EDITION ASSIGN TO FEDITION                         
-                FILE STATUS IS WS-FS-EDI.                               
+            SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+                ORGANIZATION IS LINE SEQUENTIAL
+                FILE STATUS IS WS-FS-EDI.
                                                                         
        DATA DIVISION.                                                   
        FILE SECTION.                                                    

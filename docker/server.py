@@ -16,21 +16,27 @@ BIN_DIR = "/app/bin"
 DATA_DIR = "/app/01-batch/data"
 
 PROGRAMS = {
-    "PJ20RLV": {
-        "name": "Releve de compte",
-        "description": "Edition d'un releve de compte client avec tri des mouvements par date",
-        "input": "Numero de compte (001-020)",
+    "PJ10ACT": {
+        "name": "Edition par activite",
+        "description": "Liste des clients tries par activite professionnelle",
+        "input": None,
         "phase": "batch",
     },
-    "PJ19MOMT": {
-        "name": "Mouvements par compte",
-        "description": "Extraction et tri des mouvements d'un compte specifique",
-        "input": "Numero de compte (001-020)",
+    "PJ10REG": {
+        "name": "Edition par region",
+        "description": "Liste des clients tries par region",
+        "input": None,
         "phase": "batch",
     },
-    "PJ21MERG": {
-        "name": "Fusion trimestrielle",
-        "description": "Fusion des mouvements de 3 mois (Janvier, Fevrier, Mars)",
+    "PJ14MAIN": {
+        "name": "Tables de reference",
+        "description": "Edition des 3 tables (regions, comptes, professions)",
+        "input": None,
+        "phase": "batch",
+    },
+    "PJ15MONT": {
+        "name": "Montants et moyennes",
+        "description": "Calcul des montants totaux et moyennes par type",
         "input": None,
         "phase": "batch",
     },
@@ -40,9 +46,27 @@ PROGRAMS = {
         "input": None,
         "phase": "batch",
     },
-    "PJ15MONT": {
-        "name": "Montants et moyennes",
-        "description": "Calcul des montants totaux et moyennes par type",
+    "PJ17TOP5": {
+        "name": "Top 5 debiteurs",
+        "description": "Classement des 5 plus gros clients debiteurs",
+        "input": None,
+        "phase": "batch",
+    },
+    "PJ19MOMT": {
+        "name": "Mouvements par compte",
+        "description": "Extraction et tri des mouvements d'un compte specifique",
+        "input": "Numero de compte (001-020)",
+        "phase": "batch",
+    },
+    "PJ20RLV": {
+        "name": "Releve de compte",
+        "description": "Edition d'un releve de compte client avec tri des mouvements par date",
+        "input": "Numero de compte (001-020)",
+        "phase": "batch",
+    },
+    "PJ21MERG": {
+        "name": "Fusion trimestrielle",
+        "description": "Fusion des mouvements de 3 mois (Janvier, Fevrier, Mars)",
         "input": None,
         "phase": "batch",
     },
@@ -89,6 +113,10 @@ def run_program(program_id):
     env = os.environ.copy()
     env["COB_LIBRARY_PATH"] = BIN_DIR
 
+    edition_file = os.path.join(DATA_DIR, "EDITION.txt")
+    if os.path.isfile(edition_file):
+        os.remove(edition_file)
+
     try:
         result = subprocess.run(
             [binary],
@@ -99,11 +127,17 @@ def run_program(program_id):
             cwd=DATA_DIR,
             env=env,
         )
+        edition = ""
+        if os.path.isfile(edition_file):
+            with open(edition_file, "r") as f:
+                edition = f.read()
+
         return jsonify({
             "program": pgm_info["name"],
             "stdout": result.stdout,
             "stderr": result.stderr,
             "returncode": result.returncode,
+            "edition": edition,
         })
     except subprocess.TimeoutExpired:
         return jsonify({"error": "Timeout (10s)"}), 504
@@ -111,7 +145,9 @@ def run_program(program_id):
 
 @app.route("/api/data/<filename>")
 def get_data(filename):
-    allowed = {"CLIENT.dat", "COMPTE.dat", "PROFES.dat", "REGION.dat"}
+    allowed = {"CLIENT.dat", "COMPTE.dat", "PROFES.dat", "REGION.dat",
+                "MOUVEMENT.dat", "MOUVJANV.dat", "MOUVFEVR.dat",
+                "MOUVMARS.dat"}
     if filename not in allowed:
         return jsonify({"error": "Fichier non autorise"}), 403
     filepath = os.path.join(DATA_DIR, filename)

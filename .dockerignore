@@ -1,0 +1,7 @@
+.git
+02-db2
+03-cics
+docs
+*.md
+*.ix
+*.ix.*

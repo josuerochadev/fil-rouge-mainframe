@@ -13,16 +13,20 @@
        FILE-CONTROL.                                                    
             SELECT F-SORT ASSIGN TO SORTWORK.                           
                                                                         
-            SELECT F-JANVIER ASSIGN TO FJANV                            
-                FILE STATUS IS WS-FS-JANV.                              
-                                                                        
-            SELECT F-FEVRIER ASSIGN TO FFEVR                            
-                FILE STATUS IS WS-FS-FEVR.                              
-                                                                        
-            SELECT F-MARS ASSIGN TO FMARS                               
-                FILE STATUS IS WS-FS-MARS.                              
-                                                                        
-            SELECT F-FUSION ASSIGN TO FFUSION                           
+            SELECT F-JANVIER ASSIGN TO 'MOUVJANV.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
+                FILE STATUS IS WS-FS-JANV.
+
+            SELECT F-FEVRIER ASSIGN TO 'MOUVFEVR.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
+                FILE STATUS IS WS-FS-FEVR.
+
+            SELECT F-MARS ASSIGN TO 'MOUVMARS.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
+                FILE STATUS IS WS-FS-MARS.
+
+            SELECT F-FUSION ASSIGN TO 'MOUVFUSI.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-FUSI.                              
                                                                         
        DATA DIVISION.                                                   

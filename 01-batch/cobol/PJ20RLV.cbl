@@ -9,16 +9,18 @@
        FILE-CONTROL.                                                    
            SELECT F-SORT ASSIGN TO SORTWORK.                            
                                                                         
-           SELECT F-CLIENT ASSIGN TO FCLIENT                            
+           SELECT F-CLIENT ASSIGN TO 'CLIENT.ix'
                ORGANIZATION IS INDEXED                                  
                ACCESS MODE IS RANDOM                                    
                RECORD KEY IS CLI-NUM-COMPTE                             
                FILE STATUS IS WS-FS-CLI.                      
                                                                         
-           SELECT F-MOUV ASSIGN TO FMOUV                                
-               FILE STATUS IS WS-FS-MOUV.                               
-                                                                        
-           SELECT F-EDITION ASSIGN TO FEDITION                          
+           SELECT F-MOUV ASSIGN TO 'MOUVEMENT.dat'
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS WS-FS-MOUV.
+
+           SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+               ORGANIZATION IS LINE SEQUENTIAL
                FILE STATUS IS WS-FS-EDI.                                
                                                                         
        DATA DIVISION.                                                   

@@ -7,17 +7,16 @@
        ENVIRONMENT DIVISION.                                            
        INPUT-OUTPUT SECTION.                                            
        FILE-CONTROL.                                                    
-            SELECT F-DEBIT ASSIGN TO AS-FDEBIT                          
-                ORGANIZATION IS SEQUENTIAL                              
-                ACCESS MODE IS SEQUENTIAL                               
-                FILE STATUS IS WS-FS-DEB.                               
-                                                                        
-            SELECT F-CREDIT ASSIGN TO AS-FCREDIT                        
-                ORGANIZATION IS SEQUENTIAL                              
-                ACCESS MODE IS SEQUENTIAL                               
-                FILE STATUS IS WS-FS-CRE.                               
-                                                                        
-            SELECT F-EDITION ASSIGN TO FEDITION                         
+            SELECT F-DEBIT ASSIGN TO 'DEBIT.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
+                FILE STATUS IS WS-FS-DEB.
+
+            SELECT F-CREDIT ASSIGN TO 'CREDIT.dat'
+                ORGANIZATION IS LINE SEQUENTIAL
+                FILE STATUS IS WS-FS-CRE.
+
+            SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-EDI.                               
                                                                         
        DATA DIVISION.                                                   

@@ -7,13 +7,14 @@
        ENVIRONMENT DIVISION.                                            
        INPUT-OUTPUT SECTION.                                            
        FILE-CONTROL.                                                    
-            SELECT F-COMPTE ASSIGN TO FCOMPTE                           
+            SELECT F-COMPTE ASSIGN TO 'COMPTE.ix'
                 ORGANIZATION IS INDEXED                                 
                 ACCESS MODE IS SEQUENTIAL                               
                 RECORD KEY IS CPT-CODE                                  
                 FILE STATUS IS WS-FS-COMPTE.                            
                                                                         
-            SELECT F-EDITION ASSIGN TO FEDITION                         
+            SELECT F-EDITION ASSIGN TO 'EDITION.txt'
+                ORGANIZATION IS LINE SEQUENTIAL
                 FILE STATUS IS WS-FS-EDITION.                           
                                                                         
        DATA DIVISION.                                                   
