@@ -72,11 +72,21 @@
                 USING F-JANVIER F-FEVRIER F-MARS
                 GIVING F-FUSION
 
-            IF WS-FS-FUSI = '00'
-                DISPLAY 'FUSION TERMINEE AVEC SUCCES'
-            ELSE
-                DISPLAY 'ERREUR FUSION - FS : ' WS-FS-FUSI
-            END-IF
+            DISPLAY 'FUSION TERMINEE'
+
+            OPEN INPUT F-FUSION
+            PERFORM UNTIL WS-FS-FUSI = '10'
+                READ F-FUSION INTO ENR-SORT
+                    AT END MOVE '10' TO WS-FS-FUSI
+                    NOT AT END
+                        DISPLAY SORT-NUM-COMPTE ' '
+                                SORT-LIBELLE ' '
+                                SORT-MONTANT ' '
+                                SORT-SENS ' '
+                                SORT-DATE
+                END-READ
+            END-PERFORM
+            CLOSE F-FUSION
 
             STOP RUN.
 

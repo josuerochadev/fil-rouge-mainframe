@@ -32,6 +32,12 @@ PROGRAMS = {
         "input": None,
         "phase": "batch",
     },
+    "PJ13AJOU": {
+        "name": "Ajout client",
+        "description": "Ajout d'un nouveau client dans le fichier KSDS (donnees en dur)",
+        "input": None,
+        "phase": "batch",
+    },
     "PJ14MAIN": {
         "name": "Tables de reference",
         "description": "Edition des 3 tables (regions, comptes, professions)",
