@@ -105,11 +105,11 @@ DATA = [
 QUERIES = {
     # ---- CONSULTATION ----
     "AFFREG": {
-        "name": "Region par code",
-        "description": "SELECT INTO sur une seule ligne avec gestion SQLCODE",
+        "name": "Region Marseille",
+        "description": "SELECT INTO sur une seule ligne (CODE_REGION = '02') avec gestion SQLCODE",
         "category": "CONSULTATION",
         "program": "AFFREG",
-        "sql": "SELECT CODE_REGION, NOM_REGION FROM REGION ORDER BY CODE_REGION",
+        "sql": "SELECT CODE_REGION, NOM_REGION FROM REGION WHERE CODE_REGION = '02'",
         "columns": ["CODE_REGION", "NOM_REGION"],
     },
     "AFFCLI": {
@@ -126,14 +126,15 @@ QUERIES = {
         "category": "CONSULTATION",
         "program": "LSTRUPT",
         "sql": (
-            "SELECT R.NOM_REGION, P.LIB_PROF, C.NUM_COMPTE, C.NOM_CLIENT, "
-            "C.PREN_CLIENT, C.SOLDE, C.POS "
+            "SELECT C.NUM_COMPTE, C.NOM_CLIENT, C.PREN_CLIENT, "
+            "R.CODE_REGION, R.NOM_REGION, P.CODE_PROF, P.LIB_PROF, "
+            "C.SOLDE, C.POS "
             "FROM CLIENT C "
             "INNER JOIN REGION R ON C.CODE_REGION = R.CODE_REGION "
             "INNER JOIN PROFESSI P ON C.CODE_PROF = P.CODE_PROF "
-            "ORDER BY R.CODE_REGION, C.CODE_PROF, C.NUM_COMPTE"
+            "ORDER BY C.CODE_REGION, C.CODE_PROF, C.NUM_COMPTE"
         ),
-        "columns": ["NOM_REGION", "LIB_PROF", "NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "SOLDE", "POS"],
+        "columns": ["NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "CODE_REGION", "NOM_REGION", "CODE_PROF", "LIB_PROF", "SOLDE", "POS"],
     },
     # ---- AGREGATION ----
     "STATCLI": {
@@ -175,13 +176,14 @@ QUERIES = {
     # ---- MOUVEMENTS ----
     "MVT2024": {
         "name": "Mouvements 2024",
-        "description": "CURSOR avec INNER JOIN CLIENT-MOUVEMENT, filtre par annee",
+        "description": "CURSOR avec INNER JOIN CLIENT-MOUVEMENT, filtre YEAR(DATE_MVT) = 2024",
         "category": "MOUVEMENTS",
         "program": "MVT2024",
         "sql": (
             "SELECT M.NUM_COMPTE, C.NOM_CLIENT, M.DATE_MVT, M.LIB_MOUV, "
             "M.MONTANT_MVT, M.SENS, M.NATURE "
             "FROM MOUVEMENT M INNER JOIN CLIENT C ON M.NUM_COMPTE = C.NUM_COMPTE "
+            "WHERE strftime('%Y', M.DATE_MVT) = '2024' "
             "ORDER BY M.DATE_MVT, M.NUM_COMPTE"
         ),
         "columns": ["NUM_COMPTE", "NOM_CLIENT", "DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS", "NATURE"],
@@ -200,16 +202,15 @@ QUERIES = {
     },
     "RELEVE": {
         "name": "Releve complet",
-        "description": "CURSOR DB2 avec FETCH, edition CR/DB et totaux par client",
+        "description": "CURSOR DB2 avec FETCH sur MOUVEMENT, client recupere par SELECT INTO separe",
         "category": "MOUVEMENTS",
         "program": "RELEVE",
         "sql": (
-            "SELECT C.NOM_CLIENT, C.PREN_CLIENT, C.NUM_COMPTE, "
-            "M.DATE_MVT, M.LIB_MOUV, M.MONTANT_MVT, M.SENS "
-            "FROM CLIENT C INNER JOIN MOUVEMENT M ON C.NUM_COMPTE = M.NUM_COMPTE "
-            "WHERE C.NUM_COMPTE = ? ORDER BY M.DATE_MVT"
+            "SELECT DATE_MVT, LIB_MOUV, MONTANT_MVT, SENS "
+            "FROM MOUVEMENT "
+            "WHERE NUM_COMPTE = ? ORDER BY DATE_MVT"
         ),
-        "columns": ["NOM_CLIENT", "PREN_CLIENT", "NUM_COMPTE", "DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS"],
+        "columns": ["DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS"],
         "input": "Comptes avec mouvements : 001, 002, 003, 005, 010, 012",
     },
     # ---- MISE A JOUR (lecture seule en demo) ----
