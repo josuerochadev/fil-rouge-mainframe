@@ -7,7 +7,8 @@ SCREENS = {
         "transaction": "AFFI",
         "program": "PRGCLIA",
         "title": "Affichage Client",
-        "description": "Consultation d'un client par numero de compte",
+        "description": "Lecture VSAM KSDS par cle, SEND MAP avec donnees client",
+        "category": "Consultation",
         "steps": [
             {
                 "label": "Ecran initial — saisie du numero",
@@ -75,7 +76,8 @@ SCREENS = {
         "transaction": "AJOU",
         "program": "PRGAJT",
         "title": "Ajout Client",
-        "description": "Ajout d'un nouveau client avec validation",
+        "description": "Saisie formulaire complet, WRITE VSAM avec controle DUPKEY",
+        "category": "Saisie",
         "steps": [
             {
                 "label": "Formulaire de saisie",
@@ -142,7 +144,8 @@ SCREENS = {
         "transaction": "LIST",
         "program": "PRGLGEN",
         "title": "Liste Paginee",
-        "description": "Navigation paginee dans le fichier CLIENT (STARTBR/READNEXT)",
+        "description": "Navigation paginee STARTBR/READNEXT, grille 15 lignes, PF7/PF8",
+        "category": "Navigation",
         "steps": [
             {
                 "label": "Premiere page — 15 clients affiches",
@@ -182,7 +185,8 @@ SCREENS = {
         "transaction": "STAT",
         "program": "PRGSTAT",
         "title": "Statistiques Region",
-        "description": "Statistiques debiteurs/crediteurs par region via AIX",
+        "description": "Parcours via AIX region, totalisation debiteurs/crediteurs par zone geographique",
+        "category": "Navigation",
         "steps": [
             {
                 "label": "Statistiques toutes regions",
@@ -220,7 +224,8 @@ SCREENS = {
         "transaction": "SUPP",
         "program": "PRGSUP",
         "title": "Suppression Client",
-        "description": "Suppression avec demande de confirmation",
+        "description": "Affichage recapitulatif puis confirmation O/N, DELETE VSAM",
+        "category": "Saisie",
         "steps": [
             {
                 "label": "Confirmation de suppression",
@@ -258,7 +263,8 @@ SCREENS = {
         "transaction": "MAJO",
         "program": "PRGMAJ",
         "title": "Mise a jour Client",
-        "description": "Modification d'un client existant (READ UPDATE + REWRITE)",
+        "description": "3 phases (recherche/affichage/validation), READ UPDATE + REWRITE, cle protegee dynamiquement via attribut ASKIP",
+        "category": "Saisie",
         "steps": [
             {
                 "label": "Ecran initial — saisie du numero",
@@ -355,7 +361,8 @@ SCREENS = {
         "transaction": "DELG",
         "program": "PRGDELG",
         "title": "Suppression Generique",
-        "description": "Suppression par prefixe via STARTBR/READNEXT (browse VSAM)",
+        "description": "Suppression par prefixe (1-6 car), STARTBR/READNEXT pour comptage, DELETE en lot avec table de cles",
+        "category": "Saisie",
         "steps": [
             {
                 "label": "Ecran initial — saisie du prefixe",
@@ -460,6 +467,7 @@ def get_screens_list():
             "program": data["program"],
             "title": data["title"],
             "description": data["description"],
+            "category": data.get("category", ""),
             "steps_count": len(data["steps"]),
         })
     return result
