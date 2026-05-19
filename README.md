@@ -109,6 +109,10 @@ Optimisations implementees :
 
 > [Rapport complet avec 160+ captures](03-cics/doc/rapport-complet.md)
 
+## Demo en ligne
+
+[fil-rouge-mainframe-production.up.railway.app](https://fil-rouge-mainframe-production.up.railway.app)
+
 ## Demarrer
 
 ### Prerequis

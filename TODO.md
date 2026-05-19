@@ -6,7 +6,7 @@
 - [x] Adapter les `ASSIGN TO` des programmes batch pour GnuCOBOL (remplacer les DD names par des chemins fichiers)
 - [x] Verifier que les fichiers .dat sont lisibles par les programmes compiles
 - [x] Choisir une plateforme de deploiement — Fly.io configure (fly.toml)
-- [ ] Deployer sur Fly.io (`fly launch && fly deploy`) et ajouter l'URL dans le README
+- [x] Deployer sur Railway et ajouter l'URL dans le README
 
 ## Tests
 
