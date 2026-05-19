@@ -1145,16 +1145,39 @@ async function renderCICS(body) {
         return;
     }
 
+    const categoryOrder = ["Consultation", "Saisie", "Navigation"];
+    const grouped = {};
+    cicsScreens.forEach(s => {
+        const cat = s.category || "Autre";
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(s);
+    });
+
+    let gridHtml = "";
+    categoryOrder.forEach(cat => {
+        if (!grouped[cat]) return;
+        gridHtml += `<div style="padding:4px 12px;color:var(--amber);font-size:11px;border-bottom:1px solid var(--border)">${esc(cat)}</div>`;
+        grouped[cat].forEach(s => {
+            gridHtml += `
+<div class="pgm-item" data-id="${esc(s.id)}" onclick="selectScreen('${esc(s.id)}')">
+    <span class="pgm-id">${esc(s.transaction)} <span style="color:var(--green-dim)">${esc(s.program)}</span></span>
+    <div style="flex:1;min-width:0">
+        <span class="pgm-name">${esc(s.title || "")}</span>
+        <span style="color:var(--green-dim);font-size:11px;display:block;margin-top:2px">${esc(s.description || "")}</span>
+    </div>
+</div>`;
+        });
+    });
+
     body.innerHTML = `
         <div class="info-banner" id="cics-info">
-<span class="t-dim">  Replay des ecrans BMS du systeme CICS — mode pseudo-conversationnel.</span>
-<span class="t-dim">  Selectionner une transaction, naviguer avec PF7/PF8.</span>
+<span class="t-dim">  Replay des ecrans BMS — mode pseudo-conversationnel, COMMAREA.</span>
+<span class="t-dim">  </span><span class="t-head">CLIAFF</span><span class="t-dim"> ──┐              </span><span class="t-head">FCLIENT</span><span class="t-dim"> (VSAM KSDS)</span>
+<span class="t-dim">  </span><span class="t-head">CLIMAJ</span><span class="t-dim"> ──┤── 7 PRG ──── 20 enregistrements</span>
+<span class="t-dim">  </span><span class="t-head">CLIDEL</span><span class="t-dim"> ──┘    |</span>
+<span class="t-dim">            COMMAREA      AIX: region, activite</span>
         </div>
-        <div class="pgm-grid" id="cics-grid">${cicsScreens.map(s => `
-        <div class="pgm-item" data-id="${esc(s.id)}" onclick="selectScreen('${esc(s.id)}')">
-            <span class="pgm-id">${esc(s.transaction)} <span style="color:var(--green-dim)">${esc(s.program)}</span></span>
-            <span class="pgm-name">${esc(s.title || s.description || "")}</span>
-        </div>`).join("")}</div>`;
+        <div class="pgm-grid" id="cics-grid">${gridHtml}</div>`;
 
     document.getElementById("screen-info").textContent = cicsScreens.length + " transactions";
 
@@ -1163,6 +1186,8 @@ async function renderCICS(body) {
     document.getElementById("cics-next-btn").disabled = true;
     document.getElementById("cics-step-info").textContent = "";
     document.getElementById("cics-nav-hint").textContent = "Selectionner une transaction";
+    const cicsCodeBtn = document.getElementById("cics-code-btn");
+    if (cicsCodeBtn) cicsCodeBtn.disabled = true;
 }
 
 function selectScreen(id) {
@@ -1174,6 +1199,14 @@ function selectScreen(id) {
     document.querySelectorAll(".pgm-item").forEach(el => {
         el.classList.toggle("selected", el.dataset.id === id);
     });
+
+    const banner = document.getElementById("cics-info");
+    if (banner) {
+        banner.innerHTML = `<span class="t-head">  ${esc(s.transaction)} — ${esc(s.title)}</span>\n<span class="t-dim">  ${esc(s.description || "")}</span>\n<span class="t-info">  Programme : ${esc(s.program)}   Naviguer avec PF7/PF8</span>`;
+    }
+
+    const cicsCodeBtn = document.getElementById("cics-code-btn");
+    if (cicsCodeBtn) cicsCodeBtn.disabled = false;
 
     showCicsStep(id, 0);
 }
