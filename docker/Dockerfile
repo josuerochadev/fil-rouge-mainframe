@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install flask flask-cors
+RUN pip3 install flask flask-cors gunicorn
 
 WORKDIR /app
 
@@ -26,4 +26,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
 
 EXPOSE 8080
 
-CMD ["python3", "server.py"]
+CMD ["sh", "-c", "bash /app/compile.sh && python3 -c 'from db2_sim import init_db; init_db()' && gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 30 server:app"]
