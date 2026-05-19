@@ -27,7 +27,7 @@
 - [x] Ecrire `docs/hercules-setup.md` (reference dans le README)
 - [ ] Ajouter une capture d'ecran de l'interface web dans le README
 - [ ] Ajouter des captures d'ecran Hercules/ISPF dans `docs/` pour illustrer l'environnement z/OS
-- [ ] Completer le README de la phase batch avec des exemples de sortie
+- [x] Completer le README de la phase batch avec des exemples de sortie
 
 ## Ameliorations futures
 
