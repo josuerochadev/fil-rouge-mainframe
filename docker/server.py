@@ -32,6 +32,13 @@ PROGRAMS = {
         "input": None,
         "phase": "batch",
     },
+    "PJ13AJOU": {
+        "name": "Ajout client (demo)",
+        "description": "Ecriture WRITE dans le fichier KSDS CLIENT avec controle FILE STATUS (demo : donnees en dur, client 021)",
+        "input": None,
+        "phase": "batch",
+        "demo_note": "Sur z/OS, ce programme ajoute un client dans le VSAM KSDS via WRITE avec gestion DUPKEY (FILE STATUS 22).",
+    },
     "PJ14MAIN": {
         "name": "Tables de reference",
         "description": "Orchestrateur qui appelle 3 sous-programmes (CALL) pour editer les tables Region, Nature de Compte et Profession sur un fichier d'edition unique",
@@ -154,13 +161,17 @@ def run_program(program_id):
             with open(edition_file, "r") as f:
                 edition = f.read()
 
-        return jsonify({
+        resp = {
             "program": pgm_info["name"],
+            "description": pgm_info["description"],
             "stdout": result.stdout,
             "stderr": result.stderr,
             "returncode": result.returncode,
             "edition": edition,
-        })
+        }
+        if pgm_info.get("demo_note"):
+            resp["demo_note"] = pgm_info["demo_note"]
+        return jsonify(resp)
     except subprocess.TimeoutExpired:
         return jsonify({"error": "Timeout (10s)"}), 504
 

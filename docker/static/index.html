@@ -488,6 +488,7 @@ const categories = {
     "EDITION": ["PJ10ACT", "PJ10REG", "PJ14MAIN"],
     "CALCUL": ["PJ15MONT", "PJ16COND", "PJ17TOP5"],
     "MOUVEMENTS": ["PJ19MOMT", "PJ20RLV", "PJ21MERG"],
+    "MISE A JOUR": ["PJ13AJOU"],
 };
 
 // Clock
@@ -790,6 +791,13 @@ async function execProgram() {
 
         let out = `<button class="back-btn" onclick="showPhase('batch')">F3 Retour</button>`;
         out += `<span class="t-prompt">EXEC ${esc(selected.id)}</span>  ${esc(selected.name)}\n`;
+
+        // Description technique (comme DB2 montre le SQL)
+        if (data.description) {
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+            out += `<span class="t-dim">  ${esc(data.description)}</span>\n`;
+        }
+
         out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
 
         // Column headers for PJ10ACT and PJ10REG
@@ -821,12 +829,18 @@ async function execProgram() {
         out += `\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
         out += `<span class="t-info">RC=${data.returncode}  ${selected.id} TERMINE</span>`;
 
-        // Add legend for programs with codes
+        // Legend
         const legend = getLegend(selected.id);
         if (legend) {
             out += `\n\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
             out += `<span class="t-head">  LEGENDE</span>\n`;
             out += `<span class="t-dim">${legend}</span>`;
+        }
+
+        // Demo note (like DB2 INSCLI/MAJCLI)
+        if (data.demo_note) {
+            out += `\n\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+            out += `<span class="t-amber">  ${esc(data.demo_note)}</span>`;
         }
 
         body.innerHTML = `<div class="terminal">${out}</div>`;
@@ -1092,7 +1106,7 @@ async function execQuery() {
             }
 
             out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
-            out += `<span class="t-info">${data.rows.length} ligne(s) retournee(s)</span>`;
+            out += `<span class="t-info">${data.rows.length} ligne(s)  ${esc(selectedQuery.program)} TERMINE</span>`;
 
             // Demo note for INSCLI/MAJCLI
             if (data.demo_note) {
