@@ -11,7 +11,7 @@ CICS sur le meme niveau.
 
 ## Scope
 
-1. Ajouter 2 transactions manquantes (MAJU, DELG)
+1. Ajouter 2 transactions manquantes (MAJO, DELG)
 2. Categories + descriptions inline + info banner avec schema
 3. Bouton CODE + endpoint source CICS
 4. Coherence visuelle du rendu apres clic
@@ -26,11 +26,11 @@ CICS sur le meme niveau.
 
 ---
 
-## Section 1 — Transactions MAJU et DELG
+## Section 1 — Transactions MAJO et DELG
 
-### MAJU (PRGMAJ / CLIMAJ.bms)
+### MAJO (PRGMAJ / CLIMAJ.bms)
 
-Transaction : MAJU, programme : PRGMAJ, mapset : CLIMAJ.
+Transaction : MAJO, programme : PRGMAJ, mapset : CLIMAJ.
 Titre : "Mise a jour Client".
 Description : "3 phases (recherche/affichage/validation), READ UPDATE + REWRITE,
 cle protegee dynamiquement via attribut ASKIP".
@@ -97,7 +97,7 @@ Categorie : Saisie.
 
 ### Verification captures z/OS
 
-Les captures pt03/exo10 (MAJU) et pt05/exo16 (DELG) confirment la fidelite
+Les captures pt03/exo10 (MAJO) et pt05/exo16 (DELG) confirment la fidelite
 des ecrans BMS. Les layouts ci-dessus correspondent aux ecrans reels.
 
 ---
@@ -112,7 +112,7 @@ L'API `/api/cics/screens` retourne ce champ.
 | Categorie    | Transactions       |
 |-------------|-------------------|
 | Consultation | AFFI              |
-| Saisie       | AJOU, MAJU, SUPP, DELG |
+| Saisie       | AJOU, MAJO, SUPP, DELG |
 | Navigation   | LIST, STAT        |
 
 Le frontend regroupe les items par categorie avec un en-tete amber
@@ -128,7 +128,7 @@ Descriptions finales :
 
 - AFFI : "Lecture VSAM KSDS par cle, SEND MAP avec donnees client"
 - AJOU : "Saisie formulaire complet, WRITE VSAM avec controle DUPKEY"
-- MAJU : "3 phases (recherche/affichage/validation), READ UPDATE + REWRITE, cle protegee dynamiquement via attribut ASKIP"
+- MAJO : "3 phases (recherche/affichage/validation), READ UPDATE + REWRITE, cle protegee dynamiquement via attribut ASKIP"
 - SUPP : "Affichage recapitulatif puis confirmation O/N, DELETE VSAM"
 - DELG : "Suppression par prefixe (1-6 car), STARTBR/READNEXT pour comptage, DELETE en lot avec table de cles"
 - LIST : "Navigation paginee STARTBR/READNEXT, grille 15 lignes, PF7/PF8"
@@ -201,7 +201,7 @@ selectionnee. `selectScreen()` l'active.
 Le rendu de `showCicsStep` suit le pattern Batch/DB2 :
 
 ```
-  MAJU — Mise a jour Client
+  MAJO — Mise a jour Client
   ──────────────────────────────────────────────────────────────────────
   3 phases (recherche/affichage/validation), READ UPDATE + REWRITE,
   cle protegee dynamiquement via attribut ASKIP
