@@ -5,8 +5,8 @@
 - [x] Tester `docker compose up` en local et corriger les erreurs de compilation GnuCOBOL
 - [x] Adapter les `ASSIGN TO` des programmes batch pour GnuCOBOL (remplacer les DD names par des chemins fichiers)
 - [x] Verifier que les fichiers .dat sont lisibles par les programmes compiles
-- [ ] Choisir une plateforme de deploiement (Render, Railway, Fly.io) et deployer
-- [ ] Ajouter l'URL de la demo live dans le README principal
+- [x] Choisir une plateforme de deploiement — Fly.io configure (fly.toml)
+- [ ] Deployer sur Fly.io (`fly launch && fly deploy`) et ajouter l'URL dans le README
 
 ## Tests
 
@@ -14,6 +14,7 @@
 - [x] Tester les programmes interactifs (PJ19MOMT, PJ20RLV) avec differentes entrees
 - [x] Verifier les sorties des programmes non-interactifs (PJ15MONT, PJ16COND, PJ21MERG)
 - [x] Tester les endpoints de l'API Flask (`/api/programs`, `/api/run/<id>`, `/api/data/<file>`)
+- [x] CI/CD GitHub Actions — compilation automatique des 15 programmes batch
 
 ## Audit qualite
 
@@ -31,7 +32,7 @@
 
 ## Ameliorations futures
 
-- [ ] Ajouter un healthcheck dans le Dockerfile
-- [ ] Ajouter les programmes DB2 en mode simulation (PostgreSQL/SQLite au lieu de DB2)
+- [x] Ajouter un healthcheck dans le Dockerfile
+- [x] Ajouter les programmes DB2 en mode simulation (SQLite au lieu de DB2)
 - [x] Creer un fichier MOUVEMENT.dat pour que PJ19MOMT et PJ20RLV fonctionnent sans z/OS
-- [ ] Ajouter un mode "terminal" dans l'interface web (style 3270) pour les screenshots CICS
+- [x] Ajouter un mode "terminal" dans l'interface web (style 3270) pour les ecrans CICS
