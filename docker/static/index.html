@@ -444,6 +444,7 @@
             </div>
 
             <div class="cics-nav" id="cics-nav" style="display:none">
+                <button class="nav-btn" id="cics-code-btn" onclick="viewSource()" disabled style="background:var(--amber);color:var(--bg)">CODE</button>
                 <button class="nav-btn" id="cics-prev-btn" onclick="cicsPrev()" disabled>PF7 Prec</button>
                 <button class="nav-btn" id="cics-next-btn" onclick="cicsNext()" disabled>PF8 Suiv</button>
                 <span class="step-info" id="cics-step-info"></span>
@@ -674,6 +675,49 @@ function selectPgm(id) {
 
 // ---- VIEW SOURCE ----
 async function viewSource() {
+    if (currentPhase === "cics") {
+        if (!selectedScreen) return;
+        const body = document.getElementById("screen-body");
+        body.innerHTML = `<div class="terminal"><span class="t-prompt">SOURCE ${esc(selectedScreen.program)}</span>\n<span class="t-info loading">Chargement source </span></div>`;
+
+        try {
+            const res = await fetch(`/api/source/${selectedScreen.program}`);
+            const data = await res.json();
+
+            if (data.error) {
+                body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR: ${esc(data.error)}</span></div>`;
+                return;
+            }
+
+            const source = data.source || data.content || "";
+            const lines = source.split("\n");
+
+            const cobolKeywords = /\b(IDENTIFICATION|ENVIRONMENT|DATA|PROCEDURE|DIVISION|SECTION|PERFORM|IF|EVALUATE|MOVE|OPEN|CLOSE|READ|WRITE|SORT|MERGE|CALL|STOP|DISPLAY|ACCEPT|EXEC|CICS|END-EXEC|SEND|RECEIVE|RETURN|COMMAREA|STARTBR|READNEXT|ENDBR|REWRITE|DELETE|MAP|MAPSET|ERASE|DATAONLY|CURSOR|RESP|DFHRESP|FILE)\b/g;
+
+            let out = `<button class="back-btn" onclick="showPhase('cics')">F3 Retour</button>`;
+            out += `<span class="t-prompt">SOURCE ${esc(selectedScreen.program)}</span>  ${esc(selectedScreen.title)}\n`;
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+
+            lines.forEach(line => {
+                if (line.length >= 7 && line[6] === "*") {
+                    out += `<span class="t-dim">${esc(line)}</span>\n`;
+                } else {
+                    const escaped = esc(line);
+                    const highlighted = escaped.replace(cobolKeywords, '<span class="t-prompt">$1</span>');
+                    out += `<span class="t-white">${highlighted}</span>\n`;
+                }
+            });
+
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+            out += `<span class="t-info">${lines.length} lignes</span>`;
+
+            body.innerHTML = `<div class="terminal">${out}</div>`;
+        } catch(e) {
+            body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR CONNEXION API</span></div>`;
+        }
+        return;
+    }
+
     if (currentPhase === "db2") {
         if (!selectedQuery) return;
         const body = document.getElementById("screen-body");
