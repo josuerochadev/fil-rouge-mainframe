@@ -171,6 +171,31 @@
             margin-left: auto;
         }
 
+        /* ---- INFO BANNER ---- */
+        .info-banner {
+            padding: 8px 16px;
+            min-height: 52px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ---- BACK BUTTON ---- */
+        .back-btn {
+            background: none;
+            border: 1px solid var(--green-dim);
+            color: var(--green);
+            font-family: var(--font);
+            font-size: 11px;
+            padding: 2px 10px;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.15s;
+        }
+        .back-btn:hover {
+            background: var(--green);
+            color: var(--bg);
+        }
+
         /* ---- COMMAND LINE ---- */
         .cmdline {
             border-top: 1px solid var(--border);
@@ -540,11 +565,11 @@ function showPhase(phase) {
 function renderBatch(body) {
     const list = programs.filter(p => p.phase === "batch");
     body.innerHTML = `
-        <div class="terminal" style="max-height:none;padding:8px 16px 4px">
-<span class="t-dim">  14 programmes COBOL compiles avec GnuCOBOL — fichiers VSAM, tris,</span>
+        <div class="info-banner" id="batch-info">
+<span class="t-dim">  Programmes COBOL compiles avec GnuCOBOL. Fichiers VSAM, tris,</span>
 <span class="t-dim">  fusions et editions de rapports financiers. Selectionner puis EXEC.</span>
         </div>
-        <div class="pgm-grid">${list.map(p => `
+        <div class="pgm-grid" id="batch-grid">${list.map(p => `
         <div class="pgm-item" data-id="${p.id}" onclick="selectPgm('${p.id}')">
             <span class="pgm-id">${p.id}</span>
             <span class="pgm-name">${p.name}</span>
@@ -565,11 +590,9 @@ function selectPgm(id) {
         el.classList.toggle("selected", el.dataset.id === id);
     });
 
-    // Show description in screen body
-    const body = document.getElementById("screen-body");
-    const desc = body.querySelector(".terminal");
-    if (desc) {
-        desc.innerHTML = `<span class="t-head">  ${esc(pgm.id)} — ${esc(pgm.name)}</span>\n<span class="t-dim">  ${esc(pgm.description)}</span>\n<span class="t-info">  ${pgm.input ? "Saisir " + esc(pgm.input) + " puis EXEC" : "Appuyer sur EXEC ou Enter"}</span>`;
+    const banner = document.getElementById("batch-info");
+    if (banner) {
+        banner.innerHTML = `<span class="t-head">  ${esc(pgm.id)} — ${esc(pgm.name)}</span>\n<span class="t-dim">  ${esc(pgm.description)}</span>\n<span class="t-info">  ${pgm.input ? "Saisir " + esc(pgm.input) + " puis EXEC" : "Appuyer sur EXEC ou Enter"}</span>`;
     }
 
     const input = document.getElementById("cmd-input");
@@ -615,18 +638,23 @@ async function execProgram() {
             return;
         }
 
-        let out = `<span class="t-prompt">EXEC ${selected.id}</span>  ${esc(selected.name)}\n`;
+        let out = `<button class="back-btn" onclick="showPhase('batch')">F3 Retour</button>`;
+        out += `<span class="t-prompt">EXEC ${esc(selected.id)}</span>  ${esc(selected.name)}\n`;
         out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
 
-        if (data.edition && data.edition.trim()) {
-            out += `<span class="t-white">${esc(data.edition)}</span>`;
+        // Main output
+        const edition = (data.edition || "").trim();
+        const stdout = (data.stdout || "").trim();
+
+        if (edition) {
+            out += `<span class="t-white">${esc(edition)}</span>`;
         }
-        if (data.stdout && data.stdout.trim()) {
-            if (data.edition && data.edition.trim()) {
+        if (stdout) {
+            if (edition) {
                 out += `\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
-                out += `<span class="t-dim">${esc(data.stdout)}</span>`;
+                out += `<span class="t-dim">${esc(stdout)}</span>`;
             } else {
-                out += `<span class="t-white">${esc(data.stdout)}</span>`;
+                out += `<span class="t-white">${esc(stdout)}</span>`;
             }
         }
 
@@ -636,6 +664,14 @@ async function execProgram() {
 
         out += `\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
         out += `<span class="t-info">RC=${data.returncode}  ${selected.id} TERMINE</span>`;
+
+        // Add legend for programs with codes
+        const legend = getLegend(selected.id);
+        if (legend) {
+            out += `\n\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
+            out += `<span class="t-head">  LEGENDE</span>\n`;
+            out += `<span class="t-dim">${legend}</span>`;
+        }
 
         body.innerHTML = `<div class="terminal">${out}</div>`;
     } catch(e) {
@@ -660,11 +696,11 @@ async function renderDB2(body) {
     }
 
     body.innerHTML = `
-        <div class="terminal" style="max-height:none;padding:8px 16px 4px">
+        <div class="info-banner" id="db2-info">
 <span class="t-dim">  Simulation DB2 via SQLite — meme schema et donnees que sur z/OS.</span>
 <span class="t-dim">  5 tables, 20 clients, 12 mouvements. Selectionner une requete puis EXEC.</span>
         </div>
-        <div class="pgm-grid">${db2Queries.map(q => `
+        <div class="pgm-grid" id="db2-grid">${db2Queries.map(q => `
         <div class="pgm-item" data-id="${esc(q.id)}" onclick="selectQuery('${esc(q.id)}')">
             <span class="pgm-id">${esc(q.id)}</span>
             <span class="pgm-name">${esc(q.name || "")}</span>
@@ -686,6 +722,11 @@ function selectQuery(id) {
     document.querySelectorAll(".pgm-item").forEach(el => {
         el.classList.toggle("selected", el.dataset.id === id);
     });
+
+    const banner = document.getElementById("db2-info");
+    if (banner) {
+        banner.innerHTML = `<span class="t-head">  ${esc(q.id)} — ${esc(q.name)}</span>\n<span class="t-dim">  Programme COBOL-DB2 : ${esc(q.program)}</span>\n<span class="t-info">  ${q.input ? "Saisir " + esc(q.input) + " puis EXEC" : "Appuyer sur EXEC ou Enter"}</span>`;
+    }
 
     const input = document.getElementById("cmd-input");
     const btn = document.getElementById("run-btn");
@@ -726,9 +767,10 @@ async function execQuery() {
             return;
         }
 
-        let out = `<span class="t-prompt">SQL ${esc(selectedQuery.id)}</span>`;
-        if (selectedQuery.name || selectedQuery.description) {
-            out += `  ${esc(selectedQuery.name || selectedQuery.description)}`;
+        let out = `<button class="back-btn" onclick="showPhase('db2')">F3 Retour</button>`;
+        out += `<span class="t-prompt">SQL ${esc(selectedQuery.id)}</span>`;
+        if (selectedQuery.name) {
+            out += `  ${esc(selectedQuery.name)}`;
         }
         out += "\n";
 
@@ -805,11 +847,11 @@ async function renderCICS(body) {
     }
 
     body.innerHTML = `
-        <div class="terminal" style="max-height:none;padding:8px 16px 4px">
+        <div class="info-banner" id="cics-info">
 <span class="t-dim">  Replay des ecrans BMS du systeme CICS — mode pseudo-conversationnel.</span>
 <span class="t-dim">  Selectionner une transaction, naviguer avec PF7/PF8.</span>
         </div>
-        <div class="pgm-grid">${cicsScreens.map(s => `
+        <div class="pgm-grid" id="cics-grid">${cicsScreens.map(s => `
         <div class="pgm-item" data-id="${esc(s.id)}" onclick="selectScreen('${esc(s.id)}')">
             <span class="pgm-id">${esc(s.transaction)} <span style="color:var(--green-dim)">${esc(s.program)}</span></span>
             <span class="pgm-name">${esc(s.title || s.description || "")}</span>
@@ -970,6 +1012,15 @@ async function viewData(filename) {
     } catch(e) {
         out.innerHTML = `<div class="terminal"><span class="t-error">ERREUR LECTURE</span></div>`;
     }
+}
+
+function getLegend(pgmId) {
+    const legends = {
+        "PJ10ACT": "  Activites : 05=Medecin  10=Ingenieur  15=Comptable  20=Commercant  25=Fonctionnaire  30=Privee",
+        "PJ10REG": "  Regions : 01=Grand-Est  02=Ile-de-France  03=Normandie  04=Bretagne",
+        "PJ15MONT": "  Montants en centimes (x100). 10 clients debiteurs, 10 clients crediteurs.",
+    };
+    return legends[pgmId] || null;
 }
 
 function esc(s) {
