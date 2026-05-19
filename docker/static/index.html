@@ -587,7 +587,6 @@ function renderBatch(body) {
 
     // Build categorized grid
     let gridHtml = "";
-    let globalIndex = 0;
     const allCategorized = [];
     Object.keys(categories).forEach(cat => { allCategorized.push(...categories[cat]); });
 
@@ -600,12 +599,13 @@ function renderBatch(body) {
         catPrograms.forEach(p => {
             gridHtml += `
             <div class="pgm-item" data-id="${p.id}" onclick="selectPgm('${p.id}')">
-                <span style="color:var(--green-dim);font-size:10px;min-width:16px">${globalIndex + 1}</span>
                 <span class="pgm-id">${p.id}</span>
-                <span class="pgm-name">${p.name}</span>
+                <div style="flex:1;min-width:0">
+                    <span class="pgm-name">${p.name}</span>
+                    <span style="color:var(--green-dim);font-size:11px;display:block;margin-top:2px">${esc(p.description || "")}</span>
+                </div>
                 ${p.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
             </div>`;
-            globalIndex++;
         });
         gridHtml += `</div>`;
     }
@@ -618,12 +618,13 @@ function renderBatch(body) {
         uncategorized.forEach(p => {
             gridHtml += `
             <div class="pgm-item" data-id="${p.id}" onclick="selectPgm('${p.id}')">
-                <span style="color:var(--green-dim);font-size:10px;min-width:16px">${globalIndex + 1}</span>
                 <span class="pgm-id">${p.id}</span>
-                <span class="pgm-name">${p.name}</span>
+                <div style="flex:1;min-width:0">
+                    <span class="pgm-name">${p.name}</span>
+                    <span style="color:var(--green-dim);font-size:11px;display:block;margin-top:2px">${esc(p.description || "")}</span>
+                </div>
                 ${p.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
             </div>`;
-            globalIndex++;
         });
         gridHtml += `</div>`;
     }
