@@ -1,9 +1,14 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PJ10REG.
-      *---------------------------------------------------------
-      * EDITION CLIENT VIA AIX REGION
-      * LECTURE SEQUENTIELLE PAR REGION - SAUT 2 LIGNES
-      *---------------------------------------------------------
+      *================================================================*
+      * PROGRAMME : PJ10REG
+      * FONCTION  : Edition des clients tries par region
+      *             via index alternatif (AIX)
+      * TECHNIQUE : Lecture sequentielle sur AIX REGION avec
+      *             rupture et saut de lignes entre groupes
+      * ENTREE    : Fichier CLIENT indexe (CLIENT.ix)
+      * SORTIE    : Fichier d'edition (EDITION.txt)
+      *================================================================*
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.

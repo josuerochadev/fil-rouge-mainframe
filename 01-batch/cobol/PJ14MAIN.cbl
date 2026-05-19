@@ -7,19 +7,19 @@
       * TECHNIQUE : CALL statique vers sous-programmes COBOL
       * SORTIE    : Fichier d'edition consolide (FEDITION)
       *================================================================*
-       ENVIRONMENT DIVISION.                                            
-       INPUT-OUTPUT SECTION.                                            
-       FILE-CONTROL.                                                    
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
             SELECT F-EDITION ASSIGN TO 'EDITION.txt'
                 ORGANIZATION IS LINE SEQUENTIAL
-                FILE STATUS IS WS-FS-EDITION.                           
-                                                                        
-       DATA DIVISION.                                                   
-       FILE SECTION.                                                    
-                                                                        
-       FD F-EDITION.                                                    
-       01 ENR-EDITION PIC X(80).                                        
-                                                                        
+                FILE STATUS IS WS-FS-EDITION.
+
+       DATA DIVISION.
+       FILE SECTION.
+
+       FD F-EDITION.
+       01 ENR-EDITION PIC X(80).
+
        WORKING-STORAGE SECTION.
        01 WS-FS-EDITION PIC X(2).
        01 WS-RETCODE     PIC S9(4) COMP VALUE 0.
@@ -48,4 +48,4 @@
             END-IF
 
             DISPLAY 'EDITION TERMINEE'
-            STOP RUN.                                                   
+            STOP RUN.

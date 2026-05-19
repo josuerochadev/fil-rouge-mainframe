@@ -1,9 +1,14 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PJ10ACT.
-      *---------------------------------------------------------
-      * EDITION CLIENT VIA AIX ACTIVITE PROFESSIONNELLE
-      * LECTURE SEQUENTIELLE PAR ACTIVITE - SAUT 2 LIGNES
-      *---------------------------------------------------------
+      *================================================================*
+      * PROGRAMME : PJ10ACT
+      * FONCTION  : Edition des clients tries par activite
+      *             professionnelle via index alternatif (AIX)
+      * TECHNIQUE : Lecture sequentielle sur AIX ACTIVITE avec
+      *             rupture et saut de lignes entre groupes
+      * ENTREE    : Fichier CLIENT indexe (CLIENT.ix)
+      * SORTIE    : Fichier d'edition (EDITION.txt)
+      *================================================================*
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
