@@ -1,0 +1,47 @@
+name: CI — COBOL Compile
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GnuCOBOL
+        run: sudo apt-get update && sudo apt-get install -y gnucobol
+
+      - name: Compile batch programs
+        run: |
+          mkdir -p bin
+          PASS=0
+          FAIL=0
+          for src in 01-batch/cobol/*.cbl; do
+            pgm=$(basename "$src" .cbl)
+            case "$pgm" in
+              PJ14CPT|PJ14PRO|PJ14REG) flag="-m"; ext=".so" ;;
+              *) flag="-x"; ext="" ;;
+            esac
+            if cobc $flag "$src" -o "bin/$pgm$ext" 2>/dev/null; then
+              echo "  OK  $pgm"
+              PASS=$((PASS+1))
+            else
+              echo "  FAIL $pgm"
+              FAIL=$((FAIL+1))
+            fi
+          done
+          echo ""
+          echo "Results: $PASS passed, $FAIL failed"
+          if [ $FAIL -gt 0 ]; then exit 1; fi
+
+      - name: Create indexes and run smoke test
+        run: |
+          cd 01-batch/data
+          ../../bin/MKINDEX
+          echo "001" | ../../bin/PJ19MOMT > /dev/null
+          ../../bin/PJ16COND > /dev/null
+          echo "Smoke tests passed"
