@@ -95,19 +95,20 @@ def list_programs():
     return jsonify(result)
 
 
-COBOL_DIR = "/app/01-batch/cobol"
+COBOL_BATCH_DIR = "/app/01-batch/cobol"
+COBOL_DB2_DIR = "/app/02-db2/cobol"
 
 
 @app.route("/api/source/<program_id>")
 def get_source(program_id):
-    if program_id not in PROGRAMS:
-        return jsonify({"error": "Programme inconnu"}), 404
-    filepath = os.path.join(COBOL_DIR, program_id + ".cbl")
-    if not os.path.isfile(filepath):
-        return jsonify({"error": "Source non trouve"}), 404
-    with open(filepath, "r") as f:
-        source = f.read()
-    return jsonify({"id": program_id, "source": source})
+    # Check batch programs first, then DB2
+    for src_dir in [COBOL_BATCH_DIR, COBOL_DB2_DIR]:
+        filepath = os.path.join(src_dir, program_id + ".cbl")
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as f:
+                source = f.read()
+            return jsonify({"id": program_id, "source": source})
+    return jsonify({"error": "Source non trouve"}), 404
 
 
 @app.route("/api/run/<program_id>", methods=["POST"])
@@ -184,6 +185,8 @@ def list_queries():
         result.append({
             "id": qid,
             "name": q["name"],
+            "description": q.get("description", ""),
+            "category": q.get("category", ""),
             "program": q["program"],
             "input": q.get("input"),
         })

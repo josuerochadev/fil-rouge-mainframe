@@ -103,55 +103,27 @@ DATA = [
 ]
 
 QUERIES = {
+    # ---- CONSULTATION ----
+    "AFFREG": {
+        "name": "Region par code",
+        "description": "SELECT INTO sur une seule ligne avec gestion SQLCODE",
+        "category": "CONSULTATION",
+        "program": "AFFREG",
+        "sql": "SELECT CODE_REGION, NOM_REGION FROM REGION ORDER BY CODE_REGION",
+        "columns": ["CODE_REGION", "NOM_REGION"],
+    },
     "AFFCLI": {
-        "name": "Affichage clients region 02",
+        "name": "Clients de Marseille",
+        "description": "CURSOR avec FETCH en boucle, filtre par CODE_REGION = '02'",
+        "category": "CONSULTATION",
         "program": "AFFCLI",
         "sql": "SELECT NUM_COMPTE, NOM_CLIENT, PREN_CLIENT, SOLDE, POS FROM CLIENT WHERE CODE_REGION = '02' ORDER BY NUM_COMPTE",
         "columns": ["NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "SOLDE", "POS"],
     },
-    "STATCLI": {
-        "name": "Statistiques clients par position",
-        "program": "STATCLI",
-        "sql": "SELECT POS, COUNT(*) AS NB, SUM(SOLDE) AS TOTAL, AVG(SOLDE) AS MOYENNE FROM CLIENT GROUP BY POS",
-        "columns": ["POS", "NB", "TOTAL", "MOYENNE"],
-    },
-    "TOTREG": {
-        "name": "Totaux par region",
-        "program": "TOTREG",
-        "sql": (
-            "SELECT R.NOM_REGION, "
-            "COALESCE(SUM(CASE WHEN C.POS='DB' THEN C.SOLDE ELSE 0 END),0) AS TOTAL_DB, "
-            "COALESCE(SUM(CASE WHEN C.POS='CR' THEN C.SOLDE ELSE 0 END),0) AS TOTAL_CR "
-            "FROM REGION R LEFT JOIN CLIENT C ON R.CODE_REGION = C.CODE_REGION "
-            "GROUP BY R.NOM_REGION ORDER BY R.CODE_REGION"
-        ),
-        "columns": ["NOM_REGION", "TOTAL_DB", "TOTAL_CR"],
-    },
-    "MVT2024": {
-        "name": "Mouvements 2024",
-        "program": "MVT2024",
-        "sql": (
-            "SELECT M.NUM_COMPTE, C.NOM_CLIENT, M.DATE_MVT, M.LIB_MOUV, "
-            "M.MONTANT_MVT, M.SENS, M.NATURE "
-            "FROM MOUVEMENT M INNER JOIN CLIENT C ON M.NUM_COMPTE = C.NUM_COMPTE "
-            "ORDER BY M.DATE_MVT, M.NUM_COMPTE"
-        ),
-        "columns": ["NUM_COMPTE", "NOM_CLIENT", "DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS", "NATURE"],
-    },
-    "TOTMVT": {
-        "name": "Total mouvements par compte",
-        "program": "TOTMVT",
-        "sql": (
-            "SELECT C.NOM_CLIENT, COUNT(*) AS NB_MVT, "
-            "COALESCE(SUM(M.MONTANT_MVT),0) AS TOTAL "
-            "FROM CLIENT C LEFT JOIN MOUVEMENT M ON C.NUM_COMPTE = M.NUM_COMPTE "
-            "WHERE C.NUM_COMPTE = ? GROUP BY C.NOM_CLIENT"
-        ),
-        "columns": ["NOM_CLIENT", "NB_MVT", "TOTAL"],
-        "input": "Numero de compte (001-020)",
-    },
     "LSTRUPT": {
-        "name": "Liste clients par region et profession",
+        "name": "Liste avec ruptures",
+        "description": "CURSOR avec INNER JOIN sur 3 tables, ruptures sur region et profession",
+        "category": "CONSULTATION",
         "program": "LSTRUPT",
         "sql": (
             "SELECT R.NOM_REGION, P.LIB_PROF, C.NUM_COMPTE, C.NOM_CLIENT, "
@@ -163,14 +135,99 @@ QUERIES = {
         ),
         "columns": ["NOM_REGION", "LIB_PROF", "NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "SOLDE", "POS"],
     },
+    # ---- AGREGATION ----
+    "STATCLI": {
+        "name": "Statistiques DB/CR",
+        "description": "SUM, AVG, COUNT groupes par position debiteur/crediteur",
+        "category": "AGREGATION",
+        "program": "STATCLI",
+        "sql": "SELECT POS, COUNT(*) AS NB, SUM(SOLDE) AS TOTAL, ROUND(AVG(SOLDE),2) AS MOYENNE FROM CLIENT GROUP BY POS",
+        "columns": ["POS", "NB", "TOTAL", "MOYENNE"],
+    },
+    "TOTREG": {
+        "name": "Totaux par region",
+        "description": "LEFT JOIN + CASE WHEN conditionnel pour totaliser DB/CR par region",
+        "category": "AGREGATION",
+        "program": "TOTREG",
+        "sql": (
+            "SELECT R.NOM_REGION, "
+            "COALESCE(SUM(CASE WHEN C.POS='DB' THEN C.SOLDE ELSE 0 END),0) AS TOTAL_DB, "
+            "COALESCE(SUM(CASE WHEN C.POS='CR' THEN C.SOLDE ELSE 0 END),0) AS TOTAL_CR "
+            "FROM REGION R LEFT JOIN CLIENT C ON R.CODE_REGION = C.CODE_REGION "
+            "GROUP BY R.NOM_REGION ORDER BY R.CODE_REGION"
+        ),
+        "columns": ["NOM_REGION", "TOTAL_DB", "TOTAL_CR"],
+    },
+    "TOTMVT": {
+        "name": "Total mouvements client",
+        "description": "LEFT JOIN + SUM/COUNT avec parametre ACCEPT (numero de compte)",
+        "category": "AGREGATION",
+        "program": "TOTMVT",
+        "sql": (
+            "SELECT C.NOM_CLIENT, COUNT(*) AS NB_MVT, "
+            "COALESCE(SUM(M.MONTANT_MVT),0) AS TOTAL "
+            "FROM CLIENT C LEFT JOIN MOUVEMENT M ON C.NUM_COMPTE = M.NUM_COMPTE "
+            "WHERE C.NUM_COMPTE = ? GROUP BY C.NOM_CLIENT"
+        ),
+        "columns": ["NOM_CLIENT", "NB_MVT", "TOTAL"],
+        "input": "Comptes avec mouvements : 001, 002, 003, 005, 010, 012",
+    },
+    # ---- MOUVEMENTS ----
+    "MVT2024": {
+        "name": "Mouvements 2024",
+        "description": "CURSOR avec INNER JOIN CLIENT-MOUVEMENT, filtre par annee",
+        "category": "MOUVEMENTS",
+        "program": "MVT2024",
+        "sql": (
+            "SELECT M.NUM_COMPTE, C.NOM_CLIENT, M.DATE_MVT, M.LIB_MOUV, "
+            "M.MONTANT_MVT, M.SENS, M.NATURE "
+            "FROM MOUVEMENT M INNER JOIN CLIENT C ON M.NUM_COMPTE = C.NUM_COMPTE "
+            "ORDER BY M.DATE_MVT, M.NUM_COMPTE"
+        ),
+        "columns": ["NUM_COMPTE", "NOM_CLIENT", "DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS", "NATURE"],
+    },
     "RLV012": {
-        "name": "Releve de compte",
+        "name": "Releve par client",
+        "description": "CURSOR parametre avec numero de compte via ACCEPT (SYSIN)",
+        "category": "MOUVEMENTS",
         "program": "RLV012",
         "sql": (
             "SELECT M.DATE_MVT, M.LIB_MOUV, M.MONTANT_MVT, M.SENS, M.NATURE "
             "FROM MOUVEMENT M WHERE M.NUM_COMPTE = ? ORDER BY M.DATE_MVT"
         ),
         "columns": ["DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS", "NATURE"],
+        "input": "Comptes avec mouvements : 001, 002, 003, 005, 010, 012",
+    },
+    "RELEVE": {
+        "name": "Releve complet",
+        "description": "CURSOR DB2 avec FETCH, edition CR/DB et totaux par client",
+        "category": "MOUVEMENTS",
+        "program": "RELEVE",
+        "sql": (
+            "SELECT C.NOM_CLIENT, C.PREN_CLIENT, C.NUM_COMPTE, "
+            "M.DATE_MVT, M.LIB_MOUV, M.MONTANT_MVT, M.SENS "
+            "FROM CLIENT C INNER JOIN MOUVEMENT M ON C.NUM_COMPTE = M.NUM_COMPTE "
+            "WHERE C.NUM_COMPTE = ? ORDER BY M.DATE_MVT"
+        ),
+        "columns": ["NOM_CLIENT", "PREN_CLIENT", "NUM_COMPTE", "DATE_MVT", "LIB_MOUV", "MONTANT_MVT", "SENS"],
+        "input": "Comptes avec mouvements : 001, 002, 003, 005, 010, 012",
+    },
+    # ---- MISE A JOUR (lecture seule en demo) ----
+    "INSCLI": {
+        "name": "Insertion client",
+        "description": "INSERT avec COMMIT/ROLLBACK — en demo : liste les 20 clients existants",
+        "category": "MISE A JOUR",
+        "program": "INSCLI",
+        "sql": "SELECT NUM_COMPTE, NOM_CLIENT, PREN_CLIENT, ADRESSE, SOLDE, POS FROM CLIENT ORDER BY NUM_COMPTE",
+        "columns": ["NUM_COMPTE", "NOM_CLIENT", "PREN_CLIENT", "ADRESSE", "SOLDE", "POS"],
+    },
+    "MAJCLI": {
+        "name": "Mise a jour client",
+        "description": "UPDATE avec COMMIT/ROLLBACK — en demo : affiche un client modifiable",
+        "category": "MISE A JOUR",
+        "program": "MAJCLI",
+        "sql": "SELECT NUM_COMPTE, NOM_CLIENT, ADRESSE, SOLDE, POS FROM CLIENT WHERE NUM_COMPTE = ?",
+        "columns": ["NUM_COMPTE", "NOM_CLIENT", "ADRESSE", "SOLDE", "POS"],
         "input": "Numero de compte (001-020)",
     },
 }

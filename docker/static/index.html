@@ -664,6 +664,49 @@ function selectPgm(id) {
 
 // ---- VIEW SOURCE ----
 async function viewSource() {
+    if (currentPhase === "db2") {
+        if (!selectedQuery) return;
+        const body = document.getElementById("screen-body");
+        body.innerHTML = `<div class="terminal"><span class="t-prompt">SOURCE ${esc(selectedQuery.program)}</span>\n<span class="t-info loading">Chargement source </span></div>`;
+
+        try {
+            const res = await fetch(`/api/source/${selectedQuery.program}`);
+            const data = await res.json();
+
+            if (data.error) {
+                body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR: ${esc(data.error)}</span></div>`;
+                return;
+            }
+
+            const source = data.source || data.content || "";
+            const lines = source.split("\n");
+
+            const cobolKeywords = /\b(IDENTIFICATION|ENVIRONMENT|DATA|PROCEDURE|DIVISION|SECTION|PERFORM|IF|EVALUATE|MOVE|OPEN|CLOSE|READ|WRITE|SORT|MERGE|CALL|STOP|DISPLAY|ACCEPT|EXEC|SQL|END-EXEC)\b/g;
+
+            let out = `<button class="back-btn" onclick="showPhase('db2')">F3 Retour</button>`;
+            out += `<span class="t-prompt">SOURCE ${esc(selectedQuery.program)}</span>  ${esc(selectedQuery.name)}\n`;
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+
+            lines.forEach(line => {
+                if (line.length >= 7 && line[6] === "*") {
+                    out += `<span class="t-dim">${esc(line)}</span>\n`;
+                } else {
+                    const escaped = esc(line);
+                    const highlighted = escaped.replace(cobolKeywords, '<span class="t-prompt">$1</span>');
+                    out += `<span class="t-white">${highlighted}</span>\n`;
+                }
+            });
+
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+            out += `<span class="t-info">${lines.length} lignes</span>`;
+
+            body.innerHTML = `<div class="terminal">${out}</div>`;
+        } catch(e) {
+            body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR CONNEXION API</span></div>`;
+        }
+        return;
+    }
+
     if (!selected || currentPhase !== "batch") return;
 
     const body = document.getElementById("screen-body");
@@ -872,17 +915,44 @@ async function renderDB2(body) {
         return;
     }
 
+    // Group queries by category
+    const categoryOrder = ["CONSULTATION", "AGREGATION", "MOUVEMENTS", "MISE A JOUR"];
+    const grouped = {};
+    db2Queries.forEach(q => {
+        const cat = q.category || "AUTRES";
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(q);
+    });
+
+    let gridHtml = "";
+    const orderedCats = [...categoryOrder.filter(c => grouped[c]), ...Object.keys(grouped).filter(c => !categoryOrder.includes(c))];
+    orderedCats.forEach(cat => {
+        const queries = grouped[cat];
+        if (!queries || queries.length === 0) return;
+        gridHtml += `<div style="padding:4px 12px;color:var(--amber);font-size:11px;border-bottom:1px solid var(--border)">${cat}</div>`;
+        gridHtml += `<div class="pgm-grid">`;
+        queries.forEach(q => {
+            gridHtml += `
+        <div class="pgm-item" data-id="${esc(q.id)}" onclick="selectQuery('${esc(q.id)}')">
+            <span class="pgm-id">${esc(q.id)}</span>
+            <div style="flex:1;min-width:0">
+                <span class="pgm-name">${esc(q.name || "")}</span>
+                <span style="color:var(--green-dim);font-size:11px;display:block;margin-top:2px">${esc(q.description || "")}</span>
+            </div>
+            ${q.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
+        </div>`;
+        });
+        gridHtml += `</div>`;
+    });
+
     body.innerHTML = `
         <div class="info-banner" id="db2-info">
 <span class="t-dim">  Simulation DB2 via SQLite — meme schema et donnees que sur z/OS.</span>
-<span class="t-dim">  5 tables, 20 clients, 12 mouvements. Selectionner une requete puis EXEC.</span>
+<span class="t-dim">  </span><span class="t-head">REGION</span><span class="t-dim"> ──┐         </span><span class="t-head">PROFESSI</span><span class="t-dim"> ──┐        </span><span class="t-head">NATCOMPT</span>
+<span class="t-dim">  </span><span class="t-amber">(4 rows)</span><span class="t-dim"> ├── </span><span class="t-head">CLIENT</span><span class="t-dim"> </span><span class="t-amber">(20 rows)</span><span class="t-dim"> ┤        </span><span class="t-amber">(5 rows)</span>
+<span class="t-dim">           └── </span><span class="t-head">MOUVEMENT</span><span class="t-dim"> </span><span class="t-amber">(12)</span><span class="t-dim">  ─┘</span>
         </div>
-        <div class="pgm-grid" id="db2-grid">${db2Queries.map(q => `
-        <div class="pgm-item" data-id="${esc(q.id)}" onclick="selectQuery('${esc(q.id)}')">
-            <span class="pgm-id">${esc(q.id)}</span>
-            <span class="pgm-name">${esc(q.name || "")}</span>
-            ${q.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
-        </div>`).join("")}</div>`;
+        <div id="db2-grid">${gridHtml}</div>`;
 
     document.getElementById("cmd-input").placeholder = "Selectionner une requete...";
     document.getElementById("cmd-input").value = "";
@@ -903,7 +973,7 @@ function selectQuery(id) {
 
     const banner = document.getElementById("db2-info");
     if (banner) {
-        banner.innerHTML = `<span class="t-head">  ${esc(q.id)} — ${esc(q.name)}</span>\n<span class="t-dim">  Programme COBOL-DB2 : ${esc(q.program)}</span>\n<span class="t-info">  ${q.input ? "Saisir " + esc(q.input) + " puis EXEC" : "Appuyer sur EXEC ou Enter"}</span>`;
+        banner.innerHTML = `<span class="t-head">  ${esc(q.id)} — ${esc(q.name)}</span>\n<span class="t-dim">  ${esc(q.description || "")}</span>\n<span class="t-info">  Programme : ${esc(q.program)}${q.input ? "   Saisir " + esc(q.input) + " puis EXEC" : "   Appuyer sur EXEC ou Enter"}</span>`;
     }
 
     const input = document.getElementById("cmd-input");
@@ -918,7 +988,7 @@ function selectQuery(id) {
         input.value = "";
     }
     btn.disabled = false;
-    document.getElementById("code-btn").disabled = true;
+    document.getElementById("code-btn").disabled = false;
 }
 
 async function execQuery() {
