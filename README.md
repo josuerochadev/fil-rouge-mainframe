@@ -12,6 +12,7 @@
 ![VSAM](https://img.shields.io/badge/VSAM-6C6C6C?style=flat)
 ![GnuCOBOL](https://img.shields.io/badge/GnuCOBOL-4E9A06?style=flat)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![CI](https://github.com/josuerochadev/fil-rouge-mainframe/actions/workflows/ci.yml/badge.svg)
 
 [Documentation CICS](03-cics/doc/rapport-complet.md) · [Rapport DB2](02-db2/doc/RAPPORT-PROJET.md) · [Signaler un bug](../../issues)
 
