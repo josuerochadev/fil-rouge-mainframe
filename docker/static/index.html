@@ -406,7 +406,10 @@
 <body>
     <div class="shell">
         <div class="topbar">
-            <div class="title">Gestion Financiere Mainframe</div>
+            <div style="display:flex;align-items:center">
+                <div class="title">Gestion Financiere Mainframe</div>
+                <button class="back-btn" id="demo-btn" onclick="runDemo()" style="margin-left:16px">DEMO</button>
+            </div>
             <div class="status" id="clock"></div>
         </div>
 
@@ -428,6 +431,7 @@
             <div class="cmdline" id="cmdline" style="display:none">
                 <span class="prompt-char">></span>
                 <input type="text" id="cmd-input" placeholder="Selectionner un programme..." autocomplete="off">
+                <button class="run-btn" id="code-btn" onclick="viewSource()" disabled style="background:var(--amber)">CODE</button>
                 <button class="run-btn" id="run-btn" onclick="execProgram()" disabled>EXEC</button>
             </div>
 
@@ -449,7 +453,7 @@
         </div>
 
         <div class="footer-bar">
-            <div>GnuCOBOL 3.2 | Flask API | Docker</div>
+            <div>32 programmes COBOL · 60 JCL · 14 SQL · 7 BMS — GnuCOBOL · Flask · Docker</div>
             <div>
                 <a href="https://josuerocha.dev">josuerocha.dev</a> ·
                 <a href="https://github.com/josuerochadev/fil-rouge-mainframe">GitHub</a>
@@ -470,6 +474,13 @@ let selectedQuery = null;
 let cicsScreens = [];
 let selectedScreen = null;
 let currentStep = 0;
+
+// Category map for batch programs
+const categories = {
+    "EDITION": ["PJ10ACT", "PJ10REG", "PJ14MAIN"],
+    "CALCUL": ["PJ15MONT", "PJ16COND", "PJ17TOP5"],
+    "MOUVEMENTS": ["PJ19MOMT", "PJ20RLV", "PJ21MERG"],
+};
 
 // Clock
 function updateClock() {
@@ -564,21 +575,61 @@ function showPhase(phase) {
 // ---- BATCH ----
 function renderBatch(body) {
     const list = programs.filter(p => p.phase === "batch");
+
+    // Build categorized grid
+    let gridHtml = "";
+    let globalIndex = 0;
+    const allCategorized = [];
+    Object.keys(categories).forEach(cat => { allCategorized.push(...categories[cat]); });
+
+    for (const [catName, catIds] of Object.entries(categories)) {
+        const catPrograms = catIds.map(id => list.find(p => p.id === id)).filter(Boolean);
+        if (catPrograms.length === 0) continue;
+
+        gridHtml += `<div style="padding:4px 12px;color:var(--amber);font-size:11px;border-bottom:1px solid var(--border)">${catName}</div>`;
+        gridHtml += `<div class="pgm-grid">`;
+        catPrograms.forEach(p => {
+            gridHtml += `
+            <div class="pgm-item" data-id="${p.id}" onclick="selectPgm('${p.id}')">
+                <span style="color:var(--green-dim);font-size:10px;min-width:16px">${globalIndex + 1}</span>
+                <span class="pgm-id">${p.id}</span>
+                <span class="pgm-name">${p.name}</span>
+                ${p.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
+            </div>`;
+            globalIndex++;
+        });
+        gridHtml += `</div>`;
+    }
+
+    // Uncategorized programs
+    const uncategorized = list.filter(p => !allCategorized.includes(p.id));
+    if (uncategorized.length > 0) {
+        gridHtml += `<div style="padding:4px 12px;color:var(--amber);font-size:11px;border-bottom:1px solid var(--border)">AUTRES</div>`;
+        gridHtml += `<div class="pgm-grid">`;
+        uncategorized.forEach(p => {
+            gridHtml += `
+            <div class="pgm-item" data-id="${p.id}" onclick="selectPgm('${p.id}')">
+                <span style="color:var(--green-dim);font-size:10px;min-width:16px">${globalIndex + 1}</span>
+                <span class="pgm-id">${p.id}</span>
+                <span class="pgm-name">${p.name}</span>
+                ${p.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
+            </div>`;
+            globalIndex++;
+        });
+        gridHtml += `</div>`;
+    }
+
     body.innerHTML = `
         <div class="info-banner" id="batch-info">
 <span class="t-dim">  Programmes COBOL compiles avec GnuCOBOL. Fichiers VSAM, tris,</span>
 <span class="t-dim">  fusions et editions de rapports financiers. Selectionner puis EXEC.</span>
         </div>
-        <div class="pgm-grid" id="batch-grid">${list.map(p => `
-        <div class="pgm-item" data-id="${p.id}" onclick="selectPgm('${p.id}')">
-            <span class="pgm-id">${p.id}</span>
-            <span class="pgm-name">${p.name}</span>
-            ${p.input ? '<span class="pgm-input-hint">SYSIN</span>' : ''}
-        </div>`).join("")}</div>`;
+        <div id="batch-grid">${gridHtml}</div>`;
 
     document.getElementById("cmd-input").placeholder = "Selectionner un programme...";
     document.getElementById("cmd-input").value = "";
     document.getElementById("run-btn").disabled = true;
+    document.getElementById("code-btn").disabled = true;
 }
 
 function selectPgm(id) {
@@ -597,6 +648,7 @@ function selectPgm(id) {
 
     const input = document.getElementById("cmd-input");
     const btn = document.getElementById("run-btn");
+    const codeBtn = document.getElementById("code-btn");
 
     if (pgm.input) {
         input.placeholder = pgm.input;
@@ -607,6 +659,53 @@ function selectPgm(id) {
         input.value = "";
     }
     btn.disabled = false;
+    codeBtn.disabled = false;
+}
+
+// ---- VIEW SOURCE ----
+async function viewSource() {
+    if (!selected || currentPhase !== "batch") return;
+
+    const body = document.getElementById("screen-body");
+    body.innerHTML = `<div class="terminal"><span class="t-prompt">SOURCE ${selected.id}</span>\n<span class="t-info loading">Chargement source </span></div>`;
+
+    try {
+        const res = await fetch(`/api/source/${selected.id}`);
+        const data = await res.json();
+
+        if (data.error) {
+            body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR: ${esc(data.error)}</span></div>`;
+            return;
+        }
+
+        const source = data.source || data.content || "";
+        const lines = source.split("\n");
+
+        const cobolKeywords = /\b(IDENTIFICATION|ENVIRONMENT|DATA|PROCEDURE|DIVISION|SECTION|PERFORM|IF|EVALUATE|MOVE|OPEN|CLOSE|READ|WRITE|SORT|MERGE|CALL|STOP|DISPLAY|ACCEPT)\b/g;
+
+        let out = `<button class="back-btn" onclick="showPhase('batch')">F3 Retour</button>`;
+        out += `<span class="t-prompt">SOURCE ${esc(selected.id)}</span>  ${esc(selected.name)}\n`;
+        out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+
+        lines.forEach(line => {
+            // Check if column 7 is * (comment line) — COBOL fixed format
+            if (line.length >= 7 && line[6] === "*") {
+                out += `<span class="t-dim">${esc(line)}</span>\n`;
+            } else {
+                // Highlight COBOL keywords
+                const escaped = esc(line);
+                const highlighted = escaped.replace(cobolKeywords, '<span class="t-prompt">$1</span>');
+                out += `<span class="t-white">${highlighted}</span>\n`;
+            }
+        });
+
+        out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+        out += `<span class="t-info">${lines.length} lignes</span>`;
+
+        body.innerHTML = `<div class="terminal">${out}</div>`;
+    } catch(e) {
+        body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR CONNEXION API</span></div>`;
+    }
 }
 
 async function execProgram() {
@@ -640,7 +739,13 @@ async function execProgram() {
 
         let out = `<button class="back-btn" onclick="showPhase('batch')">F3 Retour</button>`;
         out += `<span class="t-prompt">EXEC ${esc(selected.id)}</span>  ${esc(selected.name)}\n`;
-        out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+        out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+
+        // Column headers for PJ10ACT and PJ10REG
+        if (selected.id === "PJ10ACT" || selected.id === "PJ10REG") {
+            out += `<span class="t-head">  NUM  REG  NOM         PRENOM      ACT      SOLDE  POS</span>\n`;
+            out += `<span class="t-separator">  \u2500\u2500\u2500  \u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500</span>\n`;
+        }
 
         // Main output
         const edition = (data.edition || "").trim();
@@ -651,7 +756,7 @@ async function execProgram() {
         }
         if (stdout) {
             if (edition) {
-                out += `\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
+                out += `\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
                 out += `<span class="t-dim">${esc(stdout)}</span>`;
             } else {
                 out += `<span class="t-white">${esc(stdout)}</span>`;
@@ -662,13 +767,13 @@ async function execProgram() {
             out += `\n<span class="t-error">${esc(data.stderr)}</span>`;
         }
 
-        out += `\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
+        out += `\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
         out += `<span class="t-info">RC=${data.returncode}  ${selected.id} TERMINE</span>`;
 
         // Add legend for programs with codes
         const legend = getLegend(selected.id);
         if (legend) {
-            out += `\n\n<span class="t-separator">${"─".repeat(70)}</span>\n`;
+            out += `\n\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
             out += `<span class="t-head">  LEGENDE</span>\n`;
             out += `<span class="t-dim">${legend}</span>`;
         }
@@ -677,6 +782,78 @@ async function execProgram() {
     } catch(e) {
         body.innerHTML = `<div class="terminal"><span class="t-error">ERREUR CONNEXION API</span></div>`;
     }
+}
+
+// ---- DEMO MODE ----
+async function runDemo() {
+    const demoBtn = document.getElementById("demo-btn");
+    demoBtn.disabled = true;
+    demoBtn.style.opacity = "0.3";
+
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Switch to batch phase
+    showPhaseByKey("batch");
+    await delay(500);
+
+    // Run PJ17TOP5
+    const pj17 = programs.find(p => p.id === "PJ17TOP5");
+    if (pj17) {
+        selected = pj17;
+        document.querySelectorAll(".pgm-item").forEach(el => {
+            el.classList.toggle("selected", el.dataset.id === "PJ17TOP5");
+        });
+        document.getElementById("cmd-input").value = "";
+        document.getElementById("run-btn").disabled = false;
+        document.getElementById("code-btn").disabled = false;
+        await execProgram();
+        await delay(3000);
+    }
+
+    // Run PJ20RLV with input "001"
+    showPhaseByKey("batch");
+    await delay(300);
+    const pj20 = programs.find(p => p.id === "PJ20RLV");
+    if (pj20) {
+        selected = pj20;
+        document.querySelectorAll(".pgm-item").forEach(el => {
+            el.classList.toggle("selected", el.dataset.id === "PJ20RLV");
+        });
+        document.getElementById("cmd-input").value = "001";
+        document.getElementById("run-btn").disabled = false;
+        document.getElementById("code-btn").disabled = false;
+        await execProgram();
+        await delay(3000);
+    }
+
+    // Run PJ16COND
+    showPhaseByKey("batch");
+    await delay(300);
+    const pj16 = programs.find(p => p.id === "PJ16COND");
+    if (pj16) {
+        selected = pj16;
+        document.querySelectorAll(".pgm-item").forEach(el => {
+            el.classList.toggle("selected", el.dataset.id === "PJ16COND");
+        });
+        document.getElementById("cmd-input").value = "";
+        document.getElementById("run-btn").disabled = false;
+        document.getElementById("code-btn").disabled = false;
+        await execProgram();
+        await delay(3000);
+    }
+
+    // Final message
+    const body = document.getElementById("screen-body");
+    body.innerHTML = `<div class="terminal">
+<span class="t-head">  DEMO TERMINEE</span>
+<span class="t-separator">${"\u2500".repeat(70)}</span>
+<span class="t-white">  Demo terminee — explorez les 3 phases</span>
+<span class="t-dim">  Utilisez les onglets Batch, DB2, CICS et Donnees pour naviguer.</span>
+
+<button class="back-btn" onclick="showPhase('batch')" style="margin-top:12px">F3 Retour</button></div>`;
+
+    demoBtn.disabled = false;
+    demoBtn.style.opacity = "1";
 }
 
 // ---- DB2 ----
@@ -710,6 +887,7 @@ async function renderDB2(body) {
     document.getElementById("cmd-input").placeholder = "Selectionner une requete...";
     document.getElementById("cmd-input").value = "";
     document.getElementById("run-btn").disabled = true;
+    document.getElementById("code-btn").disabled = true;
 
     document.getElementById("screen-info").textContent = db2Queries.length + " requetes";
 }
@@ -740,6 +918,7 @@ function selectQuery(id) {
         input.value = "";
     }
     btn.disabled = false;
+    document.getElementById("code-btn").disabled = true;
 }
 
 async function execQuery() {
@@ -776,11 +955,11 @@ async function execQuery() {
 
         // Show the SQL query if returned
         if (data.sql) {
-            out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
             out += `<span class="t-prompt">${esc(data.sql)}</span>\n`;
         }
 
-        out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+        out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
 
         // Render columns and rows
         if (data.columns && data.rows) {
@@ -799,7 +978,7 @@ async function execQuery() {
             const header = cols.map((c, i) => String(c).padEnd(widths[i])).join(" ");
             out += `<span class="t-head">${esc(header)}</span>\n`;
             // Header underline
-            const underline = widths.map(w => "─".repeat(w)).join(" ");
+            const underline = widths.map(w => "\u2500".repeat(w)).join(" ");
             out += `<span class="t-separator">${esc(underline)}</span>\n`;
 
             // Rows
@@ -815,7 +994,7 @@ async function execQuery() {
                 });
             }
 
-            out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
             out += `<span class="t-info">${data.rows.length} ligne(s) retournee(s)</span>`;
 
         } else if (data.message) {
@@ -907,9 +1086,9 @@ async function showCicsStep(id, step) {
             out += ` — ${esc(selectedScreen.title)}`;
         }
         out += `</span>\n`;
-        out += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+        out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
         out += rendered;
-        out += `\n<span class="t-separator">${"─".repeat(70)}</span>`;
+        out += `\n<span class="t-separator">${"\u2500".repeat(70)}</span>`;
 
         body.innerHTML = `<div class="terminal" style="font-size:12px">${out}</div>`;
 
@@ -974,16 +1153,35 @@ function renderData(body) {
         ["MOUVEMENT.dat", "15 mouvements",    "Num compte, libelle, montant, sens, date"],
     ];
 
+    const recordLayout = `<span class="t-head">  STRUCTURE ENREGISTREMENT CLIENT (80 octets)</span>
+<span class="t-separator">  ${"─".repeat(44)}</span>
+<span class="t-dim">  </span><span class="t-amber">POS 01-03</span><span class="t-dim">  NUM_COMPTE      Numerique(3)   Cle primaire</span>
+<span class="t-dim">  </span><span class="t-amber">POS 04-05</span><span class="t-dim">  CODE_REGION     Numerique(2)   01=Grand-Est, 02=IDF, 03=Normandie, 04=Bretagne</span>
+<span class="t-dim">  </span><span class="t-amber">POS 06-07</span><span class="t-dim">  NATURE_COMPTE   Numerique(2)   Code nature de compte</span>
+<span class="t-dim">  </span><span class="t-amber">POS 08-17</span><span class="t-dim">  NOM             Alpha(10)</span>
+<span class="t-dim">  </span><span class="t-amber">POS 18-27</span><span class="t-dim">  PRENOM          Alpha(10)</span>
+<span class="t-dim">  </span><span class="t-amber">POS 28-35</span><span class="t-dim">  DATE_NAISSANCE  Numerique(8)   Format AAAAMMJJ</span>
+<span class="t-dim">  </span><span class="t-amber">POS 36</span><span class="t-dim">     SEXE            Alpha(1)       M ou F</span>
+<span class="t-dim">  </span><span class="t-amber">POS 37-38</span><span class="t-dim">  ACTIVITE_PROF   Numerique(2)   Code profession</span>
+<span class="t-dim">  </span><span class="t-amber">POS 39</span><span class="t-dim">     SITUATION       Alpha(1)       C=Celib, M=Marie, D=Divorce, V=Veuf</span>
+<span class="t-dim">  </span><span class="t-amber">POS 40-49</span><span class="t-dim">  ADRESSE         Alpha(10)</span>
+<span class="t-dim">  </span><span class="t-amber">POS 50-59</span><span class="t-dim">  SOLDE           Numerique(10)</span>
+<span class="t-dim">  </span><span class="t-amber">POS 60-61</span><span class="t-dim">  POSITION        Alpha(2)       DB=Debiteur, CR=Crediteur</span>
+<span class="t-dim">  </span><span class="t-amber">POS 62-80</span><span class="t-dim">  FILLER          Alpha(19)</span>`;
+
     body.innerHTML = `
         <div class="terminal" style="max-height:none">
 <span class="t-head">  FICHIERS DE DONNEES — FORMAT ENREGISTREMENT FIXE (80 OCT)</span>
-<span class="t-separator">${"─".repeat(70)}</span>
+<span class="t-separator">${"\u2500".repeat(70)}</span>
 <span class="t-head">  FICHIER           CONTENU          STRUCTURE</span>
-<span class="t-separator">${"─".repeat(70)}</span>
+<span class="t-separator">${"\u2500".repeat(70)}</span>
 ${files.map(([f, cnt, desc]) =>
 `  <span class="t-prompt">${f.padEnd(18)}</span><span class="t-amber">${cnt.padEnd(17)}</span><span class="t-dim">${desc}</span>`
 ).join("\n")}
-<span class="t-separator">${"─".repeat(70)}</span>
+<span class="t-separator">${"\u2500".repeat(70)}</span>
+
+${recordLayout}
+<span class="t-separator">${"\u2500".repeat(70)}</span>
 
 <span class="t-info">  Cliquer sur un fichier pour afficher son contenu :</span>
 </div>
@@ -1006,7 +1204,7 @@ async function viewData(filename) {
             return;
         }
         let content = `<span class="t-head">  ${filename}  (${data.count} enregistrements)</span>\n`;
-        content += `<span class="t-separator">${"─".repeat(70)}</span>\n`;
+        content += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
         content += `<span class="t-white">${esc(data.lines.join(""))}</span>`;
         out.innerHTML = `<div class="terminal">${content}</div>`;
     } catch(e) {
