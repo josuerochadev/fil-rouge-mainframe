@@ -1,0 +1,317 @@
+# cics_screens.py
+# Reproduces CICS BMS terminal screens as ASCII art for the web interface.
+# Each screen simulates a 24-line x 80-column 3270 terminal session.
+
+SCREENS = {
+    "AFFI": {
+        "transaction": "AFFI",
+        "program": "PRGCLIA",
+        "title": "Affichage Client",
+        "description": "Consultation d'un client par numero de compte",
+        "steps": [
+            {
+                "label": "Ecran initial — saisie du numero",
+                "screen": [
+                    "                      *** AFFICHAGE CLIENT ***                               ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "  NUMERO COMPTE   :                                                            ",
+                    "",
+                    "  CODE REGION     :                                                            ",
+                    "  NATURE COMPTE   :                                                            ",
+                    "  NOM             :                                                            ",
+                    "  PRENOM          :                                                            ",
+                    "  DATE NAISSANCE  :                                                            ",
+                    "  SEXE            :                                                            ",
+                    "  ACTIVITE PRO    :                                                            ",
+                    "  SITUATION SOC   :                                                            ",
+                    "  ADRESSE         :                                                            ",
+                    "  SOLDE           :                                                            ",
+                    "  POSITION        :                                                            ",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : SAISIR UN NUMERO DE COMPTE ET APPUYER SUR ENTREE                  ",
+                    "",
+                    "",
+                    "  ENTER=Rechercher  PF3=Quitter  CLEAR=Effacer                                ",
+                    "",
+                ],
+            },
+            {
+                "label": "Resultat — client 001 affiche",
+                "input": "001",
+                "screen": [
+                    "                      *** AFFICHAGE CLIENT ***                               ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "  NUMERO COMPTE   : 001                                                        ",
+                    "",
+                    "  CODE REGION     : 01 PARIS                                                   ",
+                    "  NATURE COMPTE   : 20 COMPTE EPARGNE                                          ",
+                    "  NOM             : DURAND                                                     ",
+                    "  PRENOM          : ALAIN                                                      ",
+                    "  DATE NAISSANCE  : 02/11/1980                                                 ",
+                    "  SEXE            : M MASCULIN                                                 ",
+                    "  ACTIVITE PRO    : 05                                                         ",
+                    "  SITUATION SOC   : C CELIBATAIRE                                              ",
+                    "  ADRESSE         : 12 RUE DE PARIS                                            ",
+                    "  SOLDE           : 1 500,00                                                   ",
+                    "  POSITION        : CR CREDITEUR                                               ",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : CLIENT TROUVE                                                      ",
+                    "",
+                    "",
+                    "  ENTER=Rechercher  PF3=Quitter  CLEAR=Effacer                                ",
+                    "",
+                ],
+            },
+        ],
+    },
+
+    "AJOU": {
+        "transaction": "AJOU",
+        "program": "PRGAJT",
+        "title": "Ajout Client",
+        "description": "Ajout d'un nouveau client avec validation",
+        "steps": [
+            {
+                "label": "Formulaire de saisie",
+                "screen": [
+                    "                        *** AJOUT CLIENT ***                                  ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "  NUMERO COMPTE   : ______                                                     ",
+                    "",
+                    "  CODE REGION     : ______                                                     ",
+                    "  NATURE COMPTE   : ______                                                     ",
+                    "  NOM             : ______________________                                     ",
+                    "  PRENOM          : ______________________                                     ",
+                    "  DATE NAISSANCE  : __________                                                 ",
+                    "  SEXE            : _                                                          ",
+                    "  ACTIVITE PRO    : ______                                                     ",
+                    "  SITUATION SOC   : _                                                          ",
+                    "  ADRESSE         : ______________________________                             ",
+                    "  SOLDE           : ____________________                                       ",
+                    "  POSITION        : ______                                                     ",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : REMPLIR TOUS LES CHAMPS ET APPUYER SUR ENTREE                     ",
+                    "",
+                    "",
+                    "  ENTER=Valider  PF3=Quitter  CLEAR=Effacer                                   ",
+                    "",
+                ],
+            },
+            {
+                "label": "Confirmation apres ajout",
+                "screen": [
+                    "                        *** AJOUT CLIENT ***                                  ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "  NUMERO COMPTE   : 021                                                        ",
+                    "",
+                    "  CODE REGION     : 01                                                         ",
+                    "  NATURE COMPTE   : 20                                                         ",
+                    "  NOM             : NOUVEAUNOM                                                 ",
+                    "  PRENOM          : NOUVEAUPRN                                                 ",
+                    "  DATE NAISSANCE  : 15/01/1999                                                 ",
+                    "  SEXE            : M                                                          ",
+                    "  ACTIVITE PRO    : 10                                                         ",
+                    "  SITUATION SOC   : C                                                          ",
+                    "  ADRESSE         : LYON                                                       ",
+                    "  SOLDE           : 50 000,00                                                  ",
+                    "  POSITION        : CR                                                         ",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : CLIENT 021 AJOUTE AVEC SUCCES                                     ",
+                    "",
+                    "",
+                    "  ENTER=Valider  PF3=Quitter  CLEAR=Effacer                                   ",
+                    "",
+                ],
+            },
+        ],
+    },
+
+    "LIST": {
+        "transaction": "LIST",
+        "program": "PRGLGEN",
+        "title": "Liste Paginee",
+        "description": "Navigation paginee dans le fichier CLIENT (STARTBR/READNEXT)",
+        "steps": [
+            {
+                "label": "Premiere page — 15 clients affiches",
+                "screen": [
+                    "              *** LISTE DES CLIENTS ***  PAGE 1                               ",
+                    "--------------------------------------------------------------------------------",
+                    "  NUM  REGION  NOM                  PRENOM               SOLDE        POS     ",
+                    "--------------------------------------------------------------------------------",
+                    "  001  01      DURAND               ALAIN                  1 500,00   CR      ",
+                    "  002  01      MARTIN               SOPHIE                 2 300,00   CR      ",
+                    "  003  02      BERNARD              JEAN                     750,00   CR      ",
+                    "  004  02      ROBERT               PAUL                    -450,00   DB      ",
+                    "  005  03      PETIT                MARIE                  5 000,00   CR      ",
+                    "  006  03      RICHARD              LUCAS                    -80,00   DB      ",
+                    "  007  01      DUMONT               CLAIRE                 3 200,00   CR      ",
+                    "  008  04      LEROY                PIERRE                   900,00   CR      ",
+                    "  009  04      MOREAU               JULIE                 10 000,00   CR      ",
+                    "  010  02      SIMON                THOMAS                  -200,00   DB      ",
+                    "  011  01      LAURENT              ISABELLE               1 100,00   CR      ",
+                    "  012  03      LEFEBVRE             NICOLAS                6 500,00   CR      ",
+                    "  013  04      MICHEL               HELENE                   300,00   CR      ",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : 20 CLIENTS — PF7/PF8 POUR NAVIGUER                               ",
+                    "",
+                    "  ENTER=Afficher  PF3=Quitter  PF7=Prec  PF8=Suiv                            ",
+                    "",
+                ],
+            },
+        ],
+    },
+
+    "STAT": {
+        "transaction": "STAT",
+        "program": "PRGSTAT",
+        "title": "Statistiques Region",
+        "description": "Statistiques debiteurs/crediteurs par region via AIX",
+        "steps": [
+            {
+                "label": "Statistiques toutes regions",
+                "screen": [
+                    "                  *** STATISTIQUES PAR REGION ***                            ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "  REGION        NB CLI   TOTAL DB         TOTAL CR         SOLDE NET          ",
+                    "--------------------------------------------------------------------------------",
+                    "  PARIS            07       -530,00        10 600,00       10 070,00          ",
+                    "  MARSEILLE        05       -650,00         5 750,00        5 100,00          ",
+                    "  LYON             05       -280,00        14 800,00       14 520,00          ",
+                    "  LILLE            03          0,00         1 200,00        1 200,00          ",
+                    "--------------------------------------------------------------------------------",
+                    "  TOTAL            20     -1 460,00        32 350,00       30 890,00          ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : STATISTIQUES CALCULEES SUR 20 CLIENTS                            ",
+                    "",
+                    "",
+                    "  PF3=Quitter                                                                 ",
+                    "",
+                ],
+            },
+        ],
+    },
+
+    "SUPP": {
+        "transaction": "SUPP",
+        "program": "PRGSUP",
+        "title": "Suppression Client",
+        "description": "Suppression avec demande de confirmation",
+        "steps": [
+            {
+                "label": "Confirmation de suppression",
+                "screen": [
+                    "                    *** SUPPRESSION CLIENT ***                               ",
+                    "--------------------------------------------------------------------------------",
+                    "",
+                    "  NUMERO COMPTE   : 004                                                        ",
+                    "",
+                    "  NOM             : ROBERT                                                     ",
+                    "  PRENOM          : PAUL                                                       ",
+                    "  SOLDE           : -450,00                                                    ",
+                    "  POSITION        : DB DEBITEUR                                                ",
+                    "",
+                    "",
+                    "  *** CONFIRMER LA SUPPRESSION ? (O/N) : _                                    ",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "--------------------------------------------------------------------------------",
+                    "  MESSAGE : APPUYER SUR O POUR CONFIRMER N POUR ANNULER                      ",
+                    "",
+                    "",
+                    "  ENTER=Confirmer  PF3=Quitter                                                ",
+                    "",
+                ],
+            },
+        ],
+    },
+}
+
+
+def get_screens_list():
+    """Return a list of screen metadata (id, transaction, program, title, description)."""
+    result = []
+    for screen_id, data in SCREENS.items():
+        result.append({
+            "id": screen_id,
+            "transaction": data["transaction"],
+            "program": data["program"],
+            "title": data["title"],
+            "description": data["description"],
+            "steps_count": len(data["steps"]),
+        })
+    return result
+
+
+def get_screen(screen_id, step=0):
+    """
+    Return screen data for a specific step.
+
+    Parameters
+    ----------
+    screen_id : str
+        One of AFFI, AJOU, LIST, STAT, SUPP.
+    step : int
+        Zero-based step index within the screen's steps list.
+
+    Returns
+    -------
+    dict with keys: id, transaction, program, title, description,
+                    step, label, screen, input (optional)
+    None if screen_id or step is invalid.
+    """
+    if screen_id not in SCREENS:
+        return None
+
+    data = SCREENS[screen_id]
+    steps = data["steps"]
+
+    if step < 0 or step >= len(steps):
+        return None
+
+    current_step = steps[step]
+
+    result = {
+        "id": screen_id,
+        "transaction": data["transaction"],
+        "program": data["program"],
+        "title": data["title"],
+        "description": data["description"],
+        "step": step,
+        "steps_count": len(steps),
+        "label": current_step["label"],
+        "screen": current_step["screen"],
+    }
+
+    if "input" in current_step:
+        result["input"] = current_step["input"]
+
+    return result

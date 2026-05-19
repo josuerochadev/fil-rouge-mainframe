@@ -1,6 +1,8 @@
 """
-API web pour executer les programmes COBOL batch compiles avec GnuCOBOL.
-Les programmes DB2 et CICS sont presentes en mode documentation (screenshots + rapport).
+API web pour le projet fil-rouge-mainframe.
+- Batch : programmes COBOL compiles avec GnuCOBOL
+- DB2 : simulation via SQLite (meme schema, memes donnees)
+- CICS : replay des ecrans BMS en ASCII art
 """
 
 import os
@@ -8,6 +10,8 @@ import subprocess
 import json
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from db2_sim import init_db, run_query, QUERIES
+from cics_screens import get_screens_list, get_screen
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
@@ -158,7 +162,44 @@ def get_data(filename):
     return jsonify({"filename": filename, "lines": lines, "count": len(lines)})
 
 
+@app.route("/api/db2/queries")
+def list_queries():
+    result = []
+    for qid, q in QUERIES.items():
+        result.append({
+            "id": qid,
+            "name": q["name"],
+            "program": q["program"],
+            "input": q.get("input"),
+        })
+    return jsonify(result)
+
+
+@app.route("/api/db2/run/<query_id>", methods=["POST"])
+def run_db2_query(query_id):
+    params = None
+    q = QUERIES.get(query_id, {})
+    if q.get("input"):
+        data = request.get_json(silent=True) or {}
+        user_input = data.get("input", "").strip()
+        if not user_input:
+            return jsonify({"error": f"Entree requise : {q['input']}"}), 400
+        params = (user_input,)
+    return jsonify(run_query(query_id, params))
+
+
+@app.route("/api/cics/screens")
+def list_cics_screens():
+    return jsonify(get_screens_list())
+
+
+@app.route("/api/cics/screen/<screen_id>")
+def show_cics_screen(screen_id):
+    step = request.args.get("step", 0, type=int)
+    return jsonify(get_screen(screen_id, step))
+
+
 if __name__ == "__main__":
-    # Compiler au demarrage
     os.system("bash /app/compile.sh")
+    init_db()
     app.run(host="0.0.0.0", port=8080)
