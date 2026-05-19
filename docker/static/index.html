@@ -1284,8 +1284,13 @@ async function showCicsStep(id, step) {
         }
         out += `</span>\n`;
         out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+        if (selectedScreen.description) {
+            out += `<span class="t-dim">  ${esc(selectedScreen.description)}</span>\n`;
+            out += `<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+        }
         out += rendered;
-        out += `\n<span class="t-separator">${"\u2500".repeat(70)}</span>`;
+        out += `\n<span class="t-separator">${"\u2500".repeat(70)}</span>\n`;
+        out += `<span class="t-info">  Etape ${step + 1}/${data.steps_count} — ${esc(data.label)}</span>`;
 
         body.innerHTML = `<div class="terminal" style="font-size:12px">${out}</div>`;
 
