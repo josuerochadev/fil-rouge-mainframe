@@ -59,13 +59,13 @@ PROGRAMS = {
     "PJ19MOMT": {
         "name": "Mouvements client",
         "description": "Calcul du montant total et du nombre de mouvements d'un client donne, avec tri interne par date (SORT + INPUT/OUTPUT PROCEDURE)",
-        "input": "Numero de compte (001-020)",
+        "input": "Compte avec mouvements : 001, 002, 003, 005, 010, 012",
         "phase": "batch",
     },
     "PJ20RLV": {
         "name": "Releve de compte",
         "description": "Edition d'un releve bancaire complet : identification du client, detail des operations triees par date, totaux credits/debits",
-        "input": "Numero de compte (001-020)",
+        "input": "Compte avec mouvements : 001, 002, 003, 005, 010, 012",
         "phase": "batch",
     },
     "PJ21MERG": {
