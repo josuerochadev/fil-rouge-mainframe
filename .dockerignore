@@ -1,6 +1,6 @@
 .git
 02-db2/doc
-03-cics
+03-cics/jcl
 docs
 *.md
 *.ix

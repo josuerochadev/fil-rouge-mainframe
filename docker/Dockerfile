@@ -14,6 +14,7 @@ WORKDIR /app
 COPY 01-batch/ /app/01-batch/
 COPY 02-db2/sql/ /app/02-db2/sql/
 COPY 02-db2/cobol/ /app/02-db2/cobol/
+COPY 03-cics/cobol/ /app/03-cics/cobol/
 COPY docker/compile.sh /app/compile.sh
 COPY docker/server.py /app/server.py
 COPY docker/db2_sim.py /app/db2_sim.py

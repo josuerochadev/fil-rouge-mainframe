@@ -104,12 +104,13 @@ def list_programs():
 
 COBOL_BATCH_DIR = "/app/01-batch/cobol"
 COBOL_DB2_DIR = "/app/02-db2/cobol"
+COBOL_CICS_DIR = "/app/03-cics/cobol"
 
 
 @app.route("/api/source/<program_id>")
 def get_source(program_id):
     # Check batch programs first, then DB2
-    for src_dir in [COBOL_BATCH_DIR, COBOL_DB2_DIR]:
+    for src_dir in [COBOL_BATCH_DIR, COBOL_DB2_DIR, COBOL_CICS_DIR]:
         filepath = os.path.join(src_dir, program_id + ".cbl")
         if os.path.isfile(filepath):
             with open(filepath, "r") as f:
