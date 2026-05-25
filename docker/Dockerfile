@@ -23,9 +23,6 @@ COPY docker/static/ /app/static/
 
 RUN mkdir -p /app/bin && chmod +x /app/compile.sh
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
-    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/programs')" || exit 1
-
 EXPOSE 8080
 
 CMD ["sh", "-c", "bash /app/compile.sh && python3 -c 'from db2_sim import init_db; init_db()' && gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 30 server:app"]
